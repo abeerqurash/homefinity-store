@@ -1,0 +1,46 @@
+/* homefinity.pk – one pill button system with one hover animation, used everywhere.
+   Hover: a dark fill sweeps across the pill, the button lifts slightly and its icon nudges.
+   Colours: --b base, --h hover fill, --t text, --ht hover text, --bc border */
+body :is(.primary-button,.secondary-button,.header-info-btn,.hf-btn,.add,.btn,.w-button,.product-button,.reservation-btn,.sales-cta-btn,.w-commerce-commercecartcheckoutbutton,.w-commerce-commercecartquickcheckoutbutton,input[type=submit]){
+ --b:#d52b2b;--h:#101614;--t:#fff;--ht:#fff;--bc:var(--b);
+ position:relative;overflow:hidden;cursor:pointer;text-decoration:none;
+ border-radius:999px!important;
+ border:2px solid var(--bc)!important;
+ color:var(--t)!important;
+ background-color:var(--b)!important;
+ background-image:linear-gradient(var(--h),var(--h))!important;
+ background-repeat:no-repeat!important;background-position:left center!important;background-size:0% 100%!important;
+ transition:background-size .5s cubic-bezier(.22,1,.36,1),color .3s,border-color .3s,transform .3s cubic-bezier(.22,1,.36,1),box-shadow .3s!important}
+/* outline variants */
+body :is(.hf-btn.ghost,.btn.o,.secondary-button.ghost){--b:transparent;--bc:#101614;--t:#101614;--h:#101614;--ht:#fff}
+/* dark variant */
+body :is(.secondary-button){--b:#101614;--h:#d52b2b}
+/* hover */
+body :is(.primary-button,.secondary-button,.header-info-btn,.hf-btn,.add,.btn,.w-button,.product-button,.reservation-btn,.sales-cta-btn,.w-commerce-commercecartcheckoutbutton,.w-commerce-commercecartquickcheckoutbutton,input[type=submit]):hover:not(:disabled):not(.done){
+ background-size:100% 100%!important;color:var(--ht)!important;border-color:var(--h)!important;
+ transform:translateY(-2px);box-shadow:0 16px 28px -14px rgba(16,22,20,.55)}
+body :is(.primary-button,.secondary-button,.header-info-btn,.hf-btn,.add,.btn,.w-button,.product-button,.reservation-btn,.sales-cta-btn,.w-commerce-commercecartcheckoutbutton,.w-commerce-commercecartquickcheckoutbutton,input[type=submit]):active:not(:disabled){transform:translateY(0) scale(.96)!important;box-shadow:none}
+/* template fill element is replaced by the sweep above */
+body .primary-button-hover-bg{display:none!important}
+body .primary-button .primary-button-text,body .header-info-btn .header-info-btn-text{color:inherit!important;position:relative;z-index:1}
+/* icon nudge */
+body :is(.hf-btn,.add,.btn) svg{transition:transform .35s cubic-bezier(.22,1,.36,1)}
+body :is(.hf-btn,.btn):hover svg{transform:translateX(4px)}
+body .add:hover svg{transform:translateX(2px) rotate(-10deg)}
+/* success + disabled */
+body .add.done{--b:#1d7a3a;--bc:#1d7a3a;background-image:none!important}
+body :is(.primary-button,.hf-btn,.add,.btn,.w-button,input[type=submit]):disabled,body [aria-disabled=true]:is(.primary-button,.hf-btn,.add,.btn){opacity:.5;cursor:not-allowed;transform:none;box-shadow:none}
+/* newsletter: matching pill input */
+body .newsletter-input{border-radius:999px!important;padding-left:24px!important;padding-right:24px!important}
+/* other buttons: pills with a light hover */
+body :is(.chip,.dd-btn){border-radius:999px;transition:background .25s,color .25s,border-color .25s,transform .25s,box-shadow .25s}
+body :is(.chip,.dd-btn):hover{transform:translateY(-1px);box-shadow:0 8px 16px -10px rgba(16,22,20,.5)}
+body :is(.chip,.dd-btn):active{transform:scale(.96)}
+/* round icon buttons keep a circle and get the same lift */
+body :is(.gal-nav,.gal-zoom,.lb-x,.lb-n){transition:background .25s,transform .3s cubic-bezier(.22,1,.36,1)!important}
+body :is(.gal-nav,.gal-zoom):hover{transform:scale(1.1)}
+body :is(.gal-nav.prev,.gal-nav.next){margin-top:-22px}
+@media (prefers-reduced-motion:reduce){
+ body :is(.primary-button,.secondary-button,.header-info-btn,.hf-btn,.add,.btn,.w-button,.product-button,.reservation-btn,.sales-cta-btn,.w-commerce-commercecartcheckoutbutton,.w-commerce-commercecartquickcheckoutbutton,input[type=submit]){transition:color .01s,border-color .01s!important}
+ body :is(.primary-button,.hf-btn,.add,.btn):hover{transform:none!important}
+}

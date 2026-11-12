@@ -1,0 +1,84 @@
+/* homefinity.pk – premium layer: motion, fields, buttons */
+:root{--ease:cubic-bezier(.22,1,.36,1);--red:#d52b2b;--line:#e6dcc3}
+html{scroll-behavior:smooth}
+body{animation:hfIn .7s var(--ease) both}
+body.leaving{opacity:0;transition:opacity .25s ease}
+@keyframes hfIn{from{opacity:0}to{opacity:1}}
+@keyframes hfUp{from{opacity:0;transform:translateY(18px) scale(.98)}to{opacity:1;transform:none}}
+@keyframes hfSlide{from{opacity:0;transform:translateX(48px)}to{opacity:1;transform:none}}
+@keyframes hfFade{from{opacity:0}to{opacity:1}}
+::selection{background:var(--red);color:#fff}
+
+/* logo */
+.nc-logo{transition:letter-spacing .5s var(--ease),opacity .3s}
+.nc-logo b{color:var(--red);font-weight:inherit}
+a:hover>.nc-logo{letter-spacing:.07em}
+
+/* header */
+.inner .main-header{position:sticky;top:0;z-index:50;transition:box-shadow .4s var(--ease)}
+.main-header.stuck{box-shadow:0 10px 30px -12px rgba(16,22,20,.25)}
+.header-menu{position:relative;transition:color .3s}
+.header-menu::after{content:"";position:absolute;left:0;bottom:-6px;height:2px;width:100%;background:var(--red);transform:scaleX(0);transform-origin:left;transition:transform .45s var(--ease)}
+.header-menu:hover::after,.header-menu.w--current::after{transform:scaleX(1)}
+.footer-menu-link{transition:transform .35s var(--ease),opacity .3s}.footer-menu-link:hover{transform:translateX(5px)}
+
+/* buttons – same red template button everywhere */
+.primary-button,.btn{transition:transform .4s var(--ease),box-shadow .4s var(--ease),background-color .3s,color .3s,border-color .3s;cursor:pointer}
+.primary-button:hover,.btn:hover{transform:translateY(-3px);box-shadow:0 14px 26px -10px rgba(213,43,43,.55)}
+.primary-button:active,.btn:active{transform:translateY(0) scale(.97);box-shadow:none}
+.btn{font-family:Manrope,sans-serif;letter-spacing:.3px;padding:14px 28px;background:var(--red)}
+.btn.o{background:transparent;color:#101614}.btn.o:hover{background:var(--red);color:#fff}
+.primary-button:focus-visible,.btn:focus-visible,a:focus-visible,button:focus-visible{outline:3px solid rgba(213,43,43,.35);outline-offset:3px}
+.nc-card .primary-button,.nc-det .primary-button{display:inline-flex;align-items:center;justify-content:center;padding:14px 28px;border:0;width:100%}
+.nc-det #q-add{width:auto;flex:1}
+
+/* product cards & images */
+.nc-card{transition:transform .5s var(--ease),box-shadow .5s var(--ease)}
+.nc-card:hover{transform:translateY(-8px);box-shadow:0 26px 40px -22px rgba(16,22,20,.35)}
+.nc-card .im{overflow:hidden}.nc-card .im img{transition:transform .9s var(--ease)}.nc-card:hover .im img{transform:scale(1.08)}
+.nc-main img{transition:transform 1.2s var(--ease),opacity .4s}.nc-main:hover img{transform:scale(1.06)}
+.nc-th button{transition:transform .35s var(--ease),border-color .3s}.nc-th button:hover{transform:translateY(-3px)}
+.product-img,.menu-image,.team-image{transition:transform .9s var(--ease)}
+.product-img:hover,.menu-image:hover,.team-image:hover{transform:scale(1.05)}
+
+/* scroll reveal */
+.rv{opacity:0;transform:translateY(28px);transition:opacity .9s var(--ease),transform .9s var(--ease);transition-delay:var(--d,0s)}
+.rv.in{opacity:1;transform:none}
+
+/* fields: no default browser look */
+input:where(:not([type=checkbox],[type=radio],[type=submit],[type=hidden],[type=file],[type=button])),select,textarea,.w-input,.w-select{
+ appearance:none;-webkit-appearance:none;font:inherit;color:#101614;background-color:#fff;border:1.5px solid var(--line)!important;border-radius:14px!important;
+ padding:14px 18px!important;height:auto!important;min-height:54px;width:100%;outline:0;box-shadow:0 1px 0 rgba(16,22,20,.03);
+ transition:border-color .3s var(--ease),box-shadow .3s var(--ease),transform .3s var(--ease),background-color .3s}
+textarea,textarea.w-input{min-height:130px;resize:vertical}
+input::placeholder,textarea::placeholder{color:#a79d86;transition:opacity .3s}
+input:focus::placeholder,textarea:focus::placeholder{opacity:.4}
+input:where(:not([type=checkbox],[type=radio],[type=submit],[type=hidden],[type=file])):hover,select:hover,textarea:hover{border-color:#cdbf9c!important}
+input:where(:not([type=checkbox],[type=radio],[type=submit],[type=hidden],[type=file])):focus,select:focus,textarea:focus,.w-input:focus,.w-select:focus{
+ border-color:var(--red)!important;box-shadow:0 0 0 5px rgba(213,43,43,.12);transform:translateY(-1px);background-color:#fff}
+select,.w-select{padding-right:48px!important;cursor:pointer;background-repeat:no-repeat;background-position:right 18px center;background-size:14px;
+ background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 9'%3E%3Cpath d='M1 1.5l6 6 6-6' fill='none' stroke='%23101614' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")}
+input[type=search]::-webkit-search-cancel-button{-webkit-appearance:none}
+input[type=file]{font:inherit;padding:10px;border:1.5px dashed var(--line);border-radius:14px;background:#fff;width:100%;transition:border-color .3s}
+input[type=file]:hover{border-color:var(--red)}
+input[type=file]::file-selector-button{margin-right:12px;border:0;border-radius:8px;padding:9px 16px;background:var(--red);color:#fff;font:600 14px Manrope,sans-serif;cursor:pointer;transition:transform .3s var(--ease)}
+input[type=file]::file-selector-button:hover{transform:translateY(-2px)}
+input[type=checkbox]{appearance:none;-webkit-appearance:none;width:46px;height:26px;border-radius:99px;background:#d9cfb8;position:relative;cursor:pointer;flex:none;transition:background-color .4s var(--ease);margin:0}
+input[type=checkbox]::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.25);transition:transform .45s var(--ease)}
+input[type=checkbox]:checked{background:var(--red)}input[type=checkbox]:checked::after{transform:translateX(20px)}
+input[type=checkbox]:focus-visible{outline:3px solid rgba(213,43,43,.35);outline-offset:3px}
+.newsletter-input{border-radius:12px!important}
+.nc-bar input[type=search]{padding-left:46px!important;background-repeat:no-repeat;background-position:16px center;background-size:18px;
+ background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23101614' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M20 20l-3.5-3.5'/%3E%3C/svg%3E")}
+.nc-bar select{width:auto}
+.nc-bar label{font-weight:600;gap:10px;cursor:pointer}
+
+/* dialogs & cart drawer */
+dialog{border:0;border-radius:24px;padding:0;box-shadow:0 40px 80px -20px rgba(16,22,20,.45);max-width:min(520px,92vw);width:100%}
+dialog[open]{animation:hfUp .5s var(--ease)}
+dialog::backdrop{background:rgba(16,22,20,.55);backdrop-filter:blur(8px);animation:hfFade .4s ease}
+.w-commerce-commercecartcontainerwrapper{animation:hfFade .35s ease}
+.w-commerce-commercecartcontainer{animation:hfSlide .55s var(--ease)}
+.nc-qty button{transition:background-color .25s,transform .25s var(--ease)}.nc-qty button:hover{background:#f4ead4}.nc-qty button:active{transform:scale(.85)}
+
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}.rv{opacity:1;transform:none}}

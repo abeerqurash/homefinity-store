@@ -1,0 +1,249 @@
+const I={"stack": "assets/img/stack.jpg", "yellow": "assets/img/yellow.jpg", "blue": "assets/img/blue.jpg", "masala": "assets/img/masala.jpg", "chipper": "assets/img/chipper.jpg", "oil": "assets/img/oil.jpg", "garlic": "assets/img/garlic.jpg", "vac1": "assets/img/vac1.jpg", "vac2": "assets/img/vac2.jpg", "stackL": "assets/img/stackL.jpg", "ic1": "assets/img/ic1.svg", "ic3": "assets/img/ic3.svg", "ic4": "assets/img/ic4.svg", "ic5": "assets/img/ic5.svg", "ic6": "assets/img/ic6.svg", "line": "assets/img/line.svg", "line2": "assets/img/line2.svg", "close": "assets/img/close.svg", "menu": "assets/img/menu.svg", "quote": "assets/img/quote.svg", "avatar": "assets/img/avatar.svg", "play": "assets/img/play.svg", "soc": "assets/img/soc.svg"};
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const LS={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch{return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch{alert("Browser storage is full. Use smaller images.")}}};
+const seed=[
+{id:1,name:"Food Carrier Double-Layer Tiffin",cat:"Lunch & Travel",price:950,stock:24,imgs:["stack","yellow","blue"],vars:[{id:"v1",label:"Yellow",sku:"TIF-YLW",price:null,stock:14,img:"yellow"},{id:"v2",label:"Blue",sku:"TIF-BLU",price:null,stock:10,img:"blue"}],ing:"Removable stainless-steel inner container.",d:"Double-layer lunch carrier in several colours."},
+{id:2,name:"Vacuum Steel Water Bottle 1000 ml",cat:"Lunch & Travel",price:1500,stock:12,imgs:["vac1","vac2"],ing:"Stainless steel, 1000 ml, carry strap.",d:"Large vacuum bottle for work and travel."},
+{id:3,name:"9-Portion Masala Storage Box",cat:"Kitchen Storage",price:750,stock:18,imgs:["masala"],ing:"9 compartments, 9 spoons and a lid.",d:"Multi-colour spice box for a tidy kitchen."},
+{id:4,name:"Stainless Steel Potato Chipper",cat:"Kitchen Tools",price:1650,stock:9,imgs:["chipper"],ing:"Stainless steel, 2 blades.",d:"Cuts fries and vegetable sticks quickly."},
+{id:5,name:"2-in-1 Oil Spray Jug",cat:"Kitchen Tools",price:650,stock:3,imgs:["oil"],ing:"Pours or sprays. Box packing.",d:"Oil dispenser for cooking and salads."},
+{id:6,name:"Stainless Steel Garlic Press",cat:"Kitchen Tools",price:350,stock:40,imgs:["garlic"],ing:"Stainless steel, comfortable grip.",d:"Press garlic in one squeeze."}].map(p=>({...p,imgs:p.imgs.map(k=>I[k]),vars:(p.vars||[]).map(v=>({...v,img:v.img?I[v.img]:""}))}));
+let P=LS.get("nc_p",null)||seed,O=LS.get("nc_o",[]),cart=LS.get("nc_c",[]),tab="dash";
+let SHIP=200,FREE=3000;const STAT=["Placed","Confirmed","Packed","Dispatched","Delivered","Cancelled"];
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)],rs=n=>"Rs. "+Number(n).toLocaleString("en-PK"),pr=id=>P.find(x=>x.id==id);
+/* ---- product options (colour / size): helpers. A cart line is {id,q} or {id,q,v}. ---- */
+const hasV=p=>!!(p&&Array.isArray(p.vars)&&p.vars.length),vr=(p,v)=>p&&v?(p.vars||[]).find(x=>x.id==v)||null:null,
+uPrice=(p,v)=>{const x=vr(p,v);return x&&x.price!=null&&x.price!==""?+x.price:p.price},
+uStock=(p,v)=>hasV(p)?(vr(p,v)?+vr(p,v).stock:0):p.stock,lk=l=>l.id+(l.v?":"+l.v:""),
+fromP=p=>hasV(p)?Math.min(...p.vars.map(x=>uPrice(p,x.id))):p.price,varies=p=>hasV(p)&&new Set(p.vars.map(x=>uPrice(p,x.id))).size>1;
+let save=()=>{LS.set("nc_p",P);LS.set("nc_o",O)};
+$$("img[data-k]").forEach(e=>e.src=I[e.dataset.k]);
+const item=(p,i)=>`<div class="w-dyn-list${i?"":" act"}"><div class="w-dyn-items"><div class="w-dyn-item"><div class="menus-box"><div class="product-details-wrapper"><div class="product-details-wrap"><a class="product-img-wrap w-inline-block" href="products.html"><img class="menu-image" src="${p.imgs[0]||""}" alt="${esc(p.name)}"></a><div class="ingredients-box"><p class="ingredients-details">Details:</p><p class="product-ingredients">${esc(p.ing||"")}</p></div><div>${p.stock>0?(hasV(p)?`<a class="primary-button product-button" href="product.html?id=${p.id}">Choose option</a>`:`<form class="menu-cart-default-state" data-pid="${p.id}"><input class="primary-button product-button" type="submit" value="Add to Cart"></form>`):`<p class="ingredients-details">Out of stock</p>`}</div></div></div><div class="menu-list"><div class="menu-list-title-box"><a class="menu-list-title-link w-inline-block" href="products.html"><h3 class="menu-list-title${i?"":" active"}">${esc(p.name)}</h3></a><div class="menu-list-line nc-dots"></div><h4 class="menu-list-price">${varies(p)?"From ":""}${rs(fromP(p))}</h4></div><p class="menu-list-text">${esc(p.d||"")}</p></div></div></div></div></div>`;
+function wire(){$$(".menu-content-box").forEach(b=>{const L=[...b.querySelectorAll(".w-dyn-list")],on=l=>L.forEach(x=>{x.classList.toggle("act",x==l);x.querySelector(".menu-list-title").classList.toggle("active",x==l)});L.forEach(l=>{l.addEventListener("mouseenter",()=>on(l));l.addEventListener("click",()=>on(l))})})}
+function shop(){const cats=[...new Set(P.map(p=>p.cat))];
+$$(".menu-dropdown").forEach((dd,k)=>{const c=cats[k];dd.style.display=c?"":"none";if(!c)return;dd.querySelector(".menu-title").textContent=c;dd.querySelector(".menu-content-box").innerHTML=P.filter(p=>p.cat==c).map(item).join("")});
+$$(".product-section .w-dyn-item").forEach((el,k)=>{const p=P[k];el.style.display=p?"":"none";if(!p)return;
+el.querySelector(".product-title").textContent=p.name;el.querySelector(".product-text").textContent=p.d;el.querySelector(".product-price").textContent=(varies(p)?"From ":"")+rs(fromP(p));el.querySelector(".product-img").src=p.imgs[0]||"";
+let f=el.querySelector("form");if(f)f.dataset.pid=p.id});
+$$(".team-image-link").forEach((a,k)=>{const p=P[k],w=a.closest(".team-block,.w-dyn-item,div")||a;if(!p)return;a.querySelector(".team-image").src=p.imgs[0]||"";const n=a.parentElement.querySelector(".team-name"),d=a.parentElement.querySelector(".team-designation");if(n)n.textContent=p.name.slice(0,26);if(d)d.textContent=p.cat});
+const c=$$(".why-us-count");if(c.length>=4){c[0].textContent=P.length;c[1].textContent=cats.length;c[2].textContent="COD";c[3].textContent="0"}const sel=$("#enq-product");if(sel)sel.innerHTML='<option value="">Select product</option>'+P.map(p=>`<option>${esc(p.name)}</option>`).join("");wire()}
+function totals(){const sub=cart.reduce((a,l)=>{const p=pr(l.id);return a+l.q*(p?uPrice(p,l.v):0)},0),ship=sub==0||sub>=FREE?0:SHIP;return{sub,ship,total:sub+ship}}
+const cw=()=>$(".w-commerce-commercecartcontainerwrapper"),tg=o=>{const w=cw();if(w)w.style.display=o?"flex":"none"};
+function cartUI(){cart=cart.filter(l=>pr(l.id));LS.set("nc_c",cart);const n=cart.reduce((a,l)=>a+l.q,0);$$(".w-commerce-commercecartopenlinkcount").forEach(e=>e.textContent=n);
+const L=$(".w-commerce-commercecartlist"),F=$(".w-commerce-commercecartform"),E=$(".w-commerce-commercecartemptystate"),T=$(".w-commerce-commercecartfooter");
+if(L)L.innerHTML=cart.map(l=>{const p=pr(l.id),x=vr(p,l.v),k=lk(l);return `<div class="w-commerce-commercecartitem"><img class="w-commerce-commercecartitemimage" src="${(x&&x.img)||p.imgs[0]||""}" alt=""><div class="w-commerce-commercecartiteminfo"><div class="w-commerce-commercecartproductname">${esc(p.name)}${x?` <small>(${esc(x.label)})</small>`:""}</div><div>${rs(uPrice(p,l.v))}</div><a href="#" data-rm="${esc(k)}" class="w-commerce-commercecartremovelink">Remove</a></div><div class="nc-q"><button type="button" data-q="${esc(k)}" data-d="-1" aria-label="Decrease">−</button><span>${l.q}</span><button type="button" data-q="${esc(k)}" data-d="1" aria-label="Increase">+</button></div></div>`}).join("");
+if(F)F.style.display=cart.length?"flex":"none";if(E)E.style.display=cart.length?"none":"block";if(T)T.style.display=cart.length?"":"none";
+$$(".w-commerce-commercecartordervalue").forEach(e=>e.textContent=rs(totals().sub))}
+function add(id,v){const p=pr(id);if(!p)return;if(hasV(p)&&!vr(p,v)){location.assign("product.html?id="+p.id);return}
+const k=hasV(p)?v:null,f=cart.find(l=>l.id==id&&(l.v||null)==k),st=uStock(p,k);if(st<1)return alert("Sorry, this is out of stock.");if(f&&f.q>=st)return alert("Only "+st+" in stock.");f?f.q++:cart.push(k?{id,q:1,v:k}:{id,q:1});cartUI();tg(true)}
+function trackLocal(tok){const o=O.find(x=>x.token==tok.trim());$("#tr").innerHTML=o?`<div class="box"><b>Order ${o.id}</b> · ${esc(o.status)} · ${rs(o.total)}<ol>${o.events.map(e=>`<li>${esc(e.s)} <span class="note">${new Date(e.t).toLocaleString()}</span></li>`).join("")}</ol><a class="btn o" href="order.html?t=${encodeURIComponent(o.token)}">Open order page</a></div>`:'<div class="empty">No order found for that tracking code.</div>'}
+function tok(){const a=new Uint8Array(12);crypto.getRandomValues(a);return[...a].map(b=>b.toString(16).padStart(2,"0")).join("")}
+function placeLocal(c,key){
+if(c.hp)throw new Error("Something went wrong. Please try again.");
+const ex=O.find(x=>x.idem&&x.idem==key);if(ex)return{order_no:ex.id,token:ex.token,total:ex.total};
+const t=totals(),items=[];
+for(const l of cart){const p=pr(l.id);if(!p)throw new Error("A product in your cart is no longer available.");const x=vr(p,l.v);if(hasV(p)&&!x)throw new Error("Please choose an option for "+p.name+".");const nm=p.name+(x?" ("+x.label+")":""),st=uStock(p,l.v);if(st<l.q)throw new Error(st>0?"Only "+st+" left of "+nm+".":nm+" is out of stock.");items.push({id:p.id,name:p.name,price:uPrice(p,l.v),q:l.q,...(x?{v:x.id,vl:x.label,sku:x.sku||""}:{})})}
+if(!items.length)throw new Error("Your cart is empty.");
+items.forEach(i=>{const p=pr(i.id),x=vr(p,i.v);if(x){x.stock-=i.q;p.stock=p.vars.reduce((a,y)=>a+ +y.stock,0)}else p.stock-=i.q});
+const o={id:"NC-"+String(1001+O.length),token:tok(),idem:key,cust:{name:c.name,phone:c.phone,email:c.email,province:c.province,city:c.city,area:c.area,addr:c.addr,landmark:c.landmark,postal:c.postal,note:c.note},items,sub:t.sub,total:t.total,ship:t.ship,pay:"Cash on delivery",status:"Placed",events:[{s:"Placed",t:Date.now()}]};
+O.unshift(o);save();return{order_no:o.id,token:o.token,total:o.total}}
+/* ---- Admin ---- */
+const imgs=f=>Promise.all([...f].map(file=>new Promise(r=>{const i=new Image();i.onload=()=>{const c=document.createElement("canvas"),s=Math.min(1,640/Math.max(i.width,i.height));c.width=i.width*s;c.height=i.height*s;c.getContext("2d").drawImage(i,0,0,c.width,c.height);r(c.toDataURL("image/jpeg",.75))};i.src=URL.createObjectURL(file)})));
+/* Options editor: one option per line, "Name | stock | price (optional) | SKU (optional) | photo number (optional)". */
+const varText=p=>(p.vars||[]).map(v=>[v.label,v.stock,v.price==null||v.price===""?"":v.price,v.sku||"",v.img&&(p.imgs||[]).indexOf(v.img)>=0?(p.imgs.indexOf(v.img)+1):""].join(" | ").replace(/(\s\|\s)+$/,"")).join("\n");
+function parseVars(t,im,old){const out=[],seen=new Set();
+String(t||"").split("\n").map(x=>x.trim()).filter(Boolean).forEach((ln,i)=>{const a=ln.split("|").map(x=>x.trim()),label=a[0]||"",nm='Option '+(i+1)+(label?' ("'+label+'")':"");
+if(!label||label.length>80)throw new Error(nm+": the name is missing or longer than 80 characters.");
+const stock=a[1]===undefined||a[1]===""?NaN:Number(a[1]);if(!Number.isInteger(stock)||stock<0)throw new Error(nm+": stock must be a whole number, 0 or more.");
+let price=null;if(a[2]){price=Number(a[2]);if(!(price>=0))throw new Error(nm+": price must be a number, 0 or more (or leave it empty to use the product price).")}
+let img="";if(a[4]){const n=parseInt(a[4],10);if(!(n>=1&&im[n-1]))throw new Error(nm+": photo number "+a[4]+" does not exist. This product has "+im.length+" photo(s).");img=im[n-1]}
+const k=label.toLowerCase();if(seen.has(k))throw new Error(nm+": this name is used twice.");seen.add(k);
+const o=(old||[]).find(x=>String(x.label).toLowerCase()==k);
+out.push({id:o?o.id:"v"+Date.now().toString(36)+i,label,sku:a[3]||"",price,stock,img})});
+if(out.length>40)throw new Error("A product can have at most 40 options.");return out}
+/* ---- admin: packing slips, order timeline, CSV export ---- */
+const oSub=o=>(o.items||[]).reduce((a,i)=>a+(+i.price||0)*(+i.q||0),0);
+const oDate=o=>{const t=(o.events&&o.events[0]&&o.events[0].t)||Date.now();return new Date(t).toLocaleString("en-PK")};
+const oAddr=c=>[c.addr,c.area,c.city,c.province,c.postal].filter(Boolean).join(", ");
+function slipHTML(o){const sub=oSub(o)||o.total,ship=Math.max(0,o.total-sub),c=o.cust||{};
+return `<section class="sl"><header><div><h1>homefinity<span>.pk</span></h1><p>Packing slip</p></div><div class="r"><b>${esc(o.id)}</b><p>${esc(oDate(o))}</p><p class="st">${esc(o.status)}</p></div></header>
+<div class="g"><div><h3>Deliver to</h3><p><b>${esc(c.name||"")}</b><br>${esc(c.phone||"")}${c.email?"<br>"+esc(c.email):""}<br>${esc(oAddr(c))}${c.landmark?"<br>Landmark: "+esc(c.landmark):""}</p></div><div><h3>Payment</h3><p><b>${esc(o.pay||"Cash on delivery")}</b><br>Collect <b>${rs(o.total)}</b> from the customer</p>${c.note?"<h3>Delivery note</h3><p>"+esc(c.note)+"</p>":""}</div></div>
+<table><thead><tr><th></th><th>Item</th><th>SKU</th><th class="n">Qty</th><th class="n">Price</th><th class="n">Total</th></tr></thead><tbody>${(o.items||[]).map(i=>`<tr><td class="ck"></td><td>${esc(i.name)}${i.vl?" <i>("+esc(i.vl)+")</i>":""}</td><td>${esc(i.sku||"")}</td><td class="n">${i.q}</td><td class="n">${rs(i.price||0)}</td><td class="n">${rs((i.price||0)*i.q)}</td></tr>`).join("")}</tbody></table>
+<div class="t"><p>Subtotal <span>${rs(sub)}</span></p><p>Delivery <span>${rs(ship)}</span></p><p class="b">Total to collect <span>${rs(o.total)}</span></p></div>
+<footer><p>Packed by: ________________ &nbsp; Checked by: ________________</p><p>Thank you for shopping with homefinity.pk</p></footer></section>`}
+function printSlips(list){if(!list.length)return alert("No orders to print.");
+const w=window.open("","_blank");if(!w)return alert("Please allow pop-ups for this page to print slips.");
+w.document.write(`<!doctype html><meta charset="utf-8"><title>Packing slips</title><style>*{box-sizing:border-box}body{font:14px/1.5 Arial,sans-serif;color:#111;margin:0}.sl{padding:28px 34px;page-break-after:always;max-width:780px;margin:0 auto}header{display:flex;justify-content:space-between;border-bottom:3px solid #111;padding-bottom:12px}h1{margin:0;font-size:30px}h1 span{color:#d52b2b}header p{margin:2px 0}.r{text-align:right}.st{display:inline-block;border:1px solid #111;padding:1px 10px;border-radius:99px;font-size:12px}.g{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin:18px 0}h3{margin:0 0 4px;font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:#666}table{width:100%;border-collapse:collapse}th,td{padding:9px 8px;border-bottom:1px solid #ccc;text-align:left;vertical-align:top}th{font-size:12px;text-transform:uppercase;color:#666}.n{text-align:right}.ck{width:22px}.ck::before{content:"";display:block;width:16px;height:16px;border:2px solid #111;border-radius:3px}.t{margin:16px 0 0 auto;width:280px}.t p{display:flex;justify-content:space-between;margin:4px 0}.t .b{border-top:2px solid #111;padding-top:8px;font-size:17px;font-weight:700}footer{margin-top:40px;color:#444}@media print{.sl{padding:0}}</style>${list.map(slipHTML).join("")}`);
+w.document.close();w.focus();setTimeout(()=>w.print(),350)}
+function exportOrders(){const q=v=>'"'+String(v==null?"":v).replace(/"/g,'""')+'"';
+const rows=[["Order","Date","Status","Name","Phone","Email","Address","City","Province","Postal","Items","Payment","Total"]].concat(O.map(o=>{const c=o.cust||{};return [o.id,oDate(o),o.status,c.name,c.phone,c.email,[c.addr,c.area,c.landmark].filter(Boolean).join(", "),c.city,c.province,c.postal,(o.items||[]).map(i=>i.name+(i.vl?" ("+i.vl+")":"")+" x"+i.q).join("; "),o.pay,o.total]}));
+const b=new Blob(["\ufeff"+rows.map(r=>r.map(q).join(",")).join("\r\n")],{type:"text/csv"}),a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="homefinity-orders-"+new Date().toISOString().slice(0,10)+".csv";document.body.appendChild(a);a.click();a.remove()}
+let ofilt="";
+const IC={dash:'<path d="M3 13h8V3H3zM13 21h8V11h-8zM3 21h8v-6H3zM13 3v6h8V3z"/>',prod:'<path d="M21 8 12 3 3 8l9 5zM3 8v8l9 5 9-5V8M12 13v8"/>',ord:'<path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4zM3 6h18M16 10a4 4 0 0 1-8 0"/>',set:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>',money:'<path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>',bag:'<path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4zM3 6h18"/>',tag:'<path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L2 12V2h10l8.6 8.6a2 2 0 0 1 0 2.8zM7 7h.01"/>',clock:'<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>'};
+const ico=k=>`<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${IC[k]||""}</svg>`;
+const oT=o=>+new Date((o.events&&o.events[0]&&o.events[0].t)||Date.now());
+const dKey=t=>{const d=new Date(t);d.setHours(0,0,0,0);return +d};
+function dayData(n){const end=dKey(Date.now()),days=[],rev=Array(n).fill(0),cnt=Array(n).fill(0);for(let i=n-1;i>=0;i--)days.push(end-i*864e5);
+O.forEach(o=>{const k=days.indexOf(dKey(oT(o)));if(k<0)return;cnt[k]++;if(o.status!="Cancelled")rev[k]+=o.total});return {days,rev,cnt}}
+const sum=(a,f,t)=>a.slice(f,t).reduce((x,y)=>x+y,0);
+const delta=(a)=>{const n=a.length,h=Math.floor(n/2),cur=sum(a,n-7,n),prev=sum(a,n-14,n-7);return prev?Math.round((cur-prev)/prev*100):(cur?100:null)};
+const dlt=d=>d==null?'<em class="fl">no earlier data</em>':`<em class="${d>=0?"up":"dn"}">${d>=0?"▲":"▼"} ${Math.abs(d)}%</em> vs previous 7 days`;
+function spark(a){const w=120,h=36,m=Math.max(...a,1),p=a.map((v,i)=>[(i/(a.length-1))*w,h-3-(v/m)*(h-8)]);const l=p.map(x=>x.join(",")).join(" ");return `<svg class="spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-hidden="true"><polygon points="0,${h} ${l} ${w},${h}"/><polyline points="${l}"/></svg>`}
+function revChart(d){const W=640,H=250,L=52,B=28,T=14,R=8,iw=W-L-R,ih=H-T-B,mx=Math.max(...d.rev,1),top=Math.ceil(mx/1000)*1000||1000,bw=iw/d.rev.length;
+const grid=[0,.5,1].map(f=>{const y=T+ih-f*ih;return `<line x1="${L}" x2="${W-R}" y1="${y}" y2="${y}"/><text x="${L-8}" y="${y+4}" text-anchor="end">${f?(top*f>=1000?Math.round(top*f/100)/10+"k":Math.round(top*f)):0}</text>`}).join("");
+const bars=d.rev.map((v,i)=>{const bh=Math.max(v?3:0,v/top*ih),x=L+i*bw+bw*.18,y=T+ih-bh;return `<rect class="bar" style="animation-delay:${i*35}ms" x="${x}" y="${y}" width="${bw*.64}" height="${bh}" rx="5"><title>${new Date(d.days[i]).toLocaleDateString("en-PK",{day:"numeric",month:"short"})}: ${rs(v)} · ${d.cnt[i]} order${d.cnt[i]==1?"":"s"}</title></rect>`}).join("");
+const xs=d.days.map((t,i)=>i%2?"":`<text x="${L+i*bw+bw/2}" y="${H-8}" text-anchor="middle">${new Date(t).getDate()}</text>`).join("");
+return `<svg class="rc" viewBox="0 0 ${W} ${H}" role="img" aria-label="Revenue over the last 14 days">${grid}${bars}${xs}</svg>`}
+const STC={Placed:"#d9a21b",Confirmed:"#2f6fdd",Packed:"#7a4fd6",Dispatched:"#0f9b9b",Delivered:"#1d8a4a",Cancelled:"#d03a3a"};
+function adminLocal(){const a=$("#admin"),on=!!window.NC_ADMIN;a.hidden=!on;document.querySelector(".page-wrapper").hidden=on;if(!on)return;
+const rev=O.filter(o=>o.status!="Cancelled").reduce((s,o)=>s+o.total,0);
+const openN=O.filter(o=>["Placed","Confirmed","Packed"].includes(o.status)).length;const tabs=[["dash","Dashboard"],["prod","Products"],["ord","Orders"]].map(([k,n])=>`<button data-t="${k}" aria-pressed="${tab==k}">${ico(k)}<span>${n}</span>${k=="ord"&&openN?`<em class="cnt">${openN}</em>`:""}</button>`).join("");let body="";
+if(tab=="dash"){const d=dayData(14),all=O.filter(o=>o.status!="Cancelled"),openO=O.filter(o=>["Placed","Confirmed","Packed"].includes(o.status)),
+avg=all.length?Math.round(rev/all.length):0,agg={};O.filter(o=>o.status!="Cancelled").forEach(o=>(o.items||[]).forEach(i=>{const a=agg[i.name]||(agg[i.name]={n:i.name,u:0,r:0});a.u+=+i.q||0;a.r+=(+i.price||0)*(+i.q||0)}));
+const top=Object.values(agg).sort((a,b)=>b.u-a.u).slice(0,5),tm=Math.max(...top.map(x=>x.u),1);
+const low=P.flatMap(p=>hasV(p)?p.vars.filter(v=>+v.stock<=5).map(v=>({n:p.name+" – "+v.label,s:+v.stock})):(p.stock<=5?[{n:p.name,s:p.stock}]:[])).sort((a,b)=>a.s-b.s);
+const kpi=(t,ic,v,f,sp)=>`<div class="kpi"><div class="kpi-h"><span>${t}</span><i>${ico(ic)}</i></div><b>${v}</b><div class="kpi-f">${f}</div>${sp||""}</div>`;
+const sc=STAT.map(k=>({k,n:O.filter(o=>o.status==k).length})),sm=Math.max(...sc.map(x=>x.n),1);
+body=`<div class="kpis">${kpi("Revenue","money",rs(rev),dlt(delta(d.rev)),spark(d.rev))}${kpi("Orders","bag",O.length,dlt(delta(d.cnt)),spark(d.cnt))}${kpi("Average order","tag",all.length?rs(avg):"–",'<em class="fl">excludes cancelled</em>')}${kpi("Needs action","clock",openN,openN?'<button class="lnk" data-t="ord">Review open orders →</button>':'<em class="fl">All caught up</em>')}</div>
+<div class="adm-row r21"><section class="card"><header><h3>Revenue</h3><span class="note">Last 14 days</span></header>${O.length?revChart(d):'<div class="empty">Revenue will appear here after your first order.</div>'}</section>
+<section class="card"><header><h3>Orders by status</h3><span class="note">${O.length} total</span></header><ul class="sbars">${sc.map(x=>`<li><span>${x.k}</span><div><i style="width:${x.n/sm*100}%;background:${STC[x.k]}"></i></div><b>${x.n}</b></li>`).join("")}</ul></section></div>
+<div class="adm-row r111"><section class="card"><header><h3>Top products</h3><span class="note">By units sold</span></header>${top.length?`<ol class="tops">${top.map((x,i)=>`<li><span class="rk">${i+1}</span><div><b>${esc(x.n)}</b><div class="tb"><i style="width:${x.u/tm*100}%"></i></div></div><span class="tv">${x.u} sold<small>${rs(x.r)}</small></span></li>`).join("")}</ol>`:'<div class="empty">No sales yet.</div>'}</section>
+<section class="card"><header><h3>Low or out of stock</h3><span class="note">${low.length} item${low.length==1?"":"s"}</span></header>${low.length?`<ul class="lows">${low.map(x=>`<li><span>${esc(x.n)}</span><b class="${x.s<=0?"out":"low"}">${x.s<=0?"Out":x.s+" left"}</b></li>`).join("")}</ul>`:'<div class="empty">All products well stocked.</div>'}</section>
+<section class="card wide"><header><h3>Recent orders</h3><button class="lnk" data-t="ord">View all →</button></header>${O.length?`<div class="tw"><table class="tbl"><thead><tr><th>Order</th><th>Customer</th><th>Date</th><th class="n">Total</th><th>Status</th></tr></thead><tbody>${O.slice(0,6).map(o=>`<tr><td><b>${esc(o.id)}</b></td><td>${esc((o.cust||{}).name||"")}<small>${esc((o.cust||{}).city||"")}</small></td><td>${esc(oDate(o))}</td><td class="n">${rs(o.total)}</td><td><span class="bd bd-${String(o.status).toLowerCase()}">${esc(o.status)}</span></td></tr>`).join("")}</tbody></table></div>`:'<div class="empty">No orders yet.</div>'}</section></div>`}
+if(tab=="prod")body=`<form id="pf" class="box pform"><input type="hidden" name="id"><input name="name" required placeholder="Product name"><input name="cat" required placeholder="Category" list="cl"><datalist id="cl">${[...new Set(P.map(p=>p.cat))].map(c=>`<option value="${esc(c)}">`).join("")}</datalist><input name="price" type="number" min="0" required placeholder="Price (Rs.)"><input name="stock" type="number" min="0" placeholder="Stock (ignored when the product has options)"><textarea name="d" placeholder="Description"></textarea><label class="note" for="vs">Options such as colour or size (optional). One per line: <code>Name | stock | price | SKU | photo number</code>. Price, SKU and photo number can be left out. Example: <code>Pink | 12 | 1500 | NICE-PNK | 2</code></label><textarea name="vs" id="vs" rows="4" placeholder="Pink | 12 | 1500 | NICE-PNK | 2&#10;Mint | 8"></textarea><input name="files" type="file" accept="image/*" multiple aria-label="Photos"><button class="btn">Save product</button></form>
+${P.map(p=>`<div class="line"><img src="${p.imgs[0]||""}" alt=""><div><b>${esc(p.name)}</b><div class="note">${esc(p.cat)} · ${hasV(p)?"from "+rs(fromP(p))+" · "+p.vars.length+" option"+(p.vars.length==1?"":"s"):rs(p.price)} · stock ${p.stock}</div></div><span class="qty"><button class="btn o" data-e="${p.id}">Edit</button><button class="btn o" data-x="${p.id}">Delete</button></span></div>`).join("")}`;
+if(tab=="ord"){const list=O.filter(o=>!ofilt||o.status==ofilt);
+const card=o=>{const c=o.cust||{},n=(o.items||[]).reduce((a,i)=>a+(+i.q||0),0);return `<article class="oc"><header><div class="oc-l"><b class="oid">${esc(o.id)}</b><span class="bd bd-${String(o.status).toLowerCase()}">${esc(o.status)}</span></div><div class="oc-r"><b>${rs(o.total)}</b><span class="note">${esc(oDate(o))} · ${esc(o.pay||"")}</span></div></header><div class="oc-g"><div><h4>Customer</h4><p><b>${esc(c.name||"")}</b><br>${esc(c.phone||"")}${c.email?"<br>"+esc(c.email):""}</p><p class="note">${esc(oAddr(c))}${c.landmark?"<br>Landmark: "+esc(c.landmark):""}${c.note?"<br>Note: "+esc(c.note):""}</p></div><div><h4>Items (${n})</h4><ul class="oi">${(o.items||[]).map(i=>`<li><span>${esc(i.name)}${i.vl?" <i>("+esc(i.vl)+")</i>":""}</span><b>×${i.q}</b></li>`).join("")}</ul></div><div><h4>Progress</h4><ol class="otl">${(o.events||[]).map(e=>`<li><b>${esc(e.s)}</b><span>${new Date(e.t).toLocaleString("en-PK")}</span></li>`).join("")}</ol></div></div><footer><button class="btn o" data-slip="${o.id}">Print packing slip</button><label>Status <select data-o="${o.id}">${STAT.map(s=>`<option${s==o.status?" selected":""}>${s}</option>`).join("")}</select></label></footer></article>`};
+body=`<div class="otools"><div class="chips">${["",...STAT].map(k=>`<button class="ofil${ofilt==k?" on":""}" data-of="${k}">${k||"All"}<em>${k?O.filter(o=>o.status==k).length:O.length}</em></button>`).join("")}</div><span class="grow"></span>${O.length?'<button class="btn" data-slipall="1">Print open slips</button><button class="btn o" data-csv="1">Export CSV</button>':""}</div>`+(list.map(card).join("")||'<div class="empty card">No orders'+(ofilt?" with status "+ofilt:" yet")+'.</div>')}
+const TT={dash:"Dashboard",prod:"Products",ord:"Orders",set:"Settings"},SS={dash:new Date().toLocaleDateString("en-PK",{weekday:"long",day:"numeric",month:"long",year:"numeric"}),prod:P.length+" product"+(P.length==1?"":"s")+" in your catalogue",ord:O.length+" order"+(O.length==1?"":"s")+" in total",set:"Store settings"};
+a.innerHTML=`<div class="adm"><aside class="adm-side"><div class="adm-brand">homefinity<span>.pk</span><small>Admin</small></div><nav class="tabs" aria-label="Admin">${tabs}</nav><a class="adm-back" href="index.html">← Back to store</a></aside><section class="adm-main"><header class="adm-top"><div><h2>${TT[tab]}</h2><p class="note">${SS[tab]}</p></div>${sb?"":'<span class="adm-demo">Demo mode · data stays in this browser</span>'}</header>${body}</section></div>`;
+const sf=$("#sf");if(sf)sf.onsubmit=e=>{e.preventDefault();LS.set("nc_video",sf.v.value.trim());alert("Saved")};const f=$("#pf");if(f)f.onsubmit=async e=>{e.preventDefault();const id=+f.id.value||Date.now(),old=pr(id),n=await imgs(f.files.files);
+const im=n.length?n:(old?.imgs||[]);let vars;try{vars=parseVars(f.vs.value,im,old?.vars)}catch(er){return alert(er.message)}
+const p={id,name:f.name.value,cat:f.cat.value,price:+f.price.value,stock:vars.length?vars.reduce((a,v)=>a+v.stock,0):(+f.stock.value||0),d:f.d.value,imgs:im,vars};
+P=old?P.map(x=>x.id==id?p:x):[...P,p];save();admin();shop()}}
+function openVid(){const u=LS.get("nc_video",""),m=u.match(/(?:youtu\.be\/|v=|embed\/)([\w-]{11})/);let h;
+if(m)h=`<iframe src="https://www.youtube-nocookie.com/embed/${m[1]}?autoplay=1" allow="autoplay;encrypted-media;fullscreen" allowfullscreen style="aspect-ratio:16/9;border:0"></iframe>`;
+else if(/^https?:|^data:|\.mp4|\.webm/.test(u))h=`<video src="${esc(u)}" controls autoplay></video>`;
+else h='<p style="padding:24px">No video added yet. Open Admin &rarr; Settings and paste a YouTube or .mp4 link.</p>';
+$("#vbody").innerHTML=h;$("#vid").showModal()}
+
+const CFG=window.NC_CONFIG||{},sb=(CFG.url&&window.supabase)?supabase.createClient(CFG.url,CFG.key):null;
+const admin=()=>sb?adminDB():adminLocal(),place=f=>submitCheckout(f),track=t=>sb?trackDB(t):trackLocal(t);
+/* ---- checkout: validation, double-submit guard, idempotency key, order page hand-off, NC_API for order.html ---- */
+const CK={key:"",sig:"",busy:false};
+const newKey=()=>(window.crypto&&crypto.randomUUID?crypto.randomUUID():tok()+tok());
+function phoneNorm(v){let d=String(v||"").replace(/\D/g,"");if(d.startsWith("0092"))d=d.slice(4);else if(d.startsWith("92"))d=d.slice(2);else if(d.startsWith("0"))d=d.slice(1);return d?"0"+d:""}
+const phoneOk=p=>/^03\d{9}$/.test(p)||/^0[12456789]\d{8,9}$/.test(p);
+const PROVS=["Sindh","Punjab","Khyber Pakhtunkhwa","Balochistan","Islamabad Capital Territory","Azad Jammu & Kashmir","Gilgit-Baltistan"];
+function vCheckout(f){
+const g=n=>(f.elements[n]&&f.elements[n].value!=null?String(f.elements[n].value):"").trim().replace(/\s+/g," "),E={};
+const c={name:g("name"),phone:phoneNorm(g("phone")),email:g("email").toLowerCase(),province:g("province"),city:g("city"),area:g("area"),addr:g("addr"),landmark:g("landmark"),postal:g("postal").replace(/\s/g,""),note:g("note"),hp:g("website")};
+if(c.name.length<2||c.name.length>80||!/\p{L}/u.test(c.name))E.name="Please enter your full name.";
+if(!phoneOk(c.phone))E.phone="Enter a valid Pakistani phone number, for example 0300 1234567.";
+if(c.email&&(c.email.length>120||!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(c.email)))E.email="That email address does not look right. You can also leave it empty.";
+if(!PROVS.includes(c.province))E.province="Please choose your province.";
+if(c.city.length<2||c.city.length>60||!/\p{L}{2}/u.test(c.city))E.city="Please enter your city.";
+if(c.area.length<2||c.area.length>80||!/\p{L}/u.test(c.area))E.area="Please enter your area or neighbourhood.";
+if(c.addr.length<6||c.addr.length>200||!/\p{L}/u.test(c.addr))E.addr="Please enter your house or flat number and street.";
+if(c.landmark.length>100)E.landmark="Landmark is too long (100 characters at most).";
+if(c.postal&&!/^\d{5}$/.test(c.postal))E.postal="Postal code should be 5 digits, or leave it empty.";
+if(c.note.length>300)E.note="Delivery note is too long (300 characters at most).";
+if(f.elements.terms&&!f.elements.terms.checked)E.terms="Please tick this box to place your order.";
+return{ok:!Object.keys(E).length,E,c}}
+function ckErr(f,E,msg){
+f.querySelectorAll(".cf-e").forEach(x=>x.remove());
+f.querySelectorAll("[aria-invalid]").forEach(x=>{x.removeAttribute("aria-invalid");x.removeAttribute("aria-describedby")});
+let first=null;
+for(const k in E){const el=f.elements[k];if(!el)continue;el.setAttribute("aria-invalid","true");const m=document.createElement("small");m.className="cf-e";m.id="cf-e-"+k;m.textContent=E[k];el.setAttribute("aria-describedby",m.id);el.after(m);first=first||el}
+const s=document.getElementById("cf-err");if(s){s.textContent=msg||"";s.hidden=!msg}
+if(first)first.focus()}
+function ckBusy(f,on){const b=f.querySelector("#cf-go");if(b){b.disabled=!!on;const sp=b.querySelector("span");if(sp)sp.textContent=on?"Placing order…":"Place order"}f.setAttribute("aria-busy",on?"true":"false")}
+function ckSum(){const el=document.getElementById("cf-sum");if(!el)return;const t=totals();
+el.innerHTML='<div><span>Subtotal</span><b>'+rs(t.sub)+'</b></div><div><span>Delivery</span><b>'+(t.ship?rs(t.ship):"Free")+'</b></div><div class="t"><span>Total, pay on delivery</span><b>'+rs(t.total)+'</b></div>'}
+function ckOpen(){const f=$("#cf"),sig=JSON.stringify(cart.map(l=>[l.id,l.v||"",l.q]));
+if(!CK.key||CK.sig!=sig){CK.key=newKey();CK.sig=sig}
+if(f){ckErr(f,{},"");ckBusy(f,false);CK.busy=false}
+ckSum();$("#cko").showModal()}
+function orderDone(r,c){
+try{const rec=LS.get("hf_recent",[]).filter(x=>x.t!=r.token);rec.unshift({n:r.order_no,t:r.token,total:+r.total,at:Date.now(),email:c.email||""});localStorage.setItem("hf_recent",JSON.stringify(rec.slice(0,10)))}catch(e){}
+CK.key="";CK.sig="";cart=[];cartUI();
+try{$("#cko").close()}catch(e){}
+location.assign("order.html?t="+encodeURIComponent(r.token)+"&new=1")}
+async function submitCheckout(f){
+if(CK.busy)return;
+const v=vCheckout(f);
+if(!v.ok){ckErr(f,v.E,"Please fix the highlighted fields.");return}
+if(!cart.length){ckErr(f,{},"Your cart is empty.");return}
+if(!CK.key)CK.key=newKey();
+CK.busy=true;ckBusy(f,true);ckErr(f,{},"");
+try{const r=await(sb?placeDB(v.c,CK.key):placeLocal(v.c,CK.key));orderDone(r,v.c)}
+catch(err){ckErr(f,{},err&&err.message?err.message:"We could not place your order. Please check your connection and try again.");CK.busy=false;ckBusy(f,false)}}
+window.NC_API={sb:!!sb,async getOrder(tk){tk=String(tk||"").trim();if(!tk)return null;
+if(sb){const {data,error}=await sb.rpc("track_order",{p_token:tk});if(error)throw error;return data||null}
+const o=O.find(x=>x.token==tk);if(!o)return null;
+return{order_no:o.id,status:o.status,total:o.total,subtotal:o.sub!=null?o.sub:o.total-(o.ship||0),shipping:o.ship||0,payment_method:o.pay,created_at:(o.events[0]||{}).t,items:o.items,events:o.events.map(e=>({status:e.s,created_at:e.t}))}}};
+window.NC_API.cart={
+lines:()=>cart.map(l=>{const p=pr(l.id);if(!p)return null;const x=vr(p,l.v);return{key:lk(l),id:l.id,v:l.v||null,q:l.q,p,vr:x,vl:x?x.label:"",price:uPrice(p,l.v),max:uStock(p,l.v),img:(x&&x.img)||(p.imgs&&p.imgs[0])||""}}).filter(Boolean),
+totals:()=>({...totals(),free:FREE,fee:SHIP}),
+set(key,q){const l=cart.find(x=>lk(x)==key);if(!l)return;const p=pr(l.id);if(!p)return;q=Math.floor(+q)||0;const m=uStock(p,l.v);if(q>m)q=m;if(q<1)cart=cart.filter(x=>x!==l);else l.q=q;cartUI()},
+remove(key){cart=cart.filter(x=>lk(x)!=key);cartUI()},
+fixStock(){const n=[];for(const l of [...cart]){const p=pr(l.id);if(!p)continue;const x=vr(p,l.v),nm=p.name+(x?" ("+x.label+")":""),st=uStock(p,l.v);if(hasV(p)&&!x){cart=cart.filter(y=>y!==l);n.push(nm+" is no longer available, so we removed it from your cart.")}else if(st<1){cart=cart.filter(y=>y!==l);n.push(nm+" is sold out, so we removed it from your cart.")}else if(l.q>st){l.q=st;n.push("Only "+st+" of "+nm+" are left, so we changed the quantity.")}}if(n.length)cartUI();return n},
+ready:()=>new Promise(res=>{let n=0;(function w(){if(P.length||++n>100)res();else setTimeout(w,100)})()})};
+/* ---- end checkout block ---- */
+
+
+async function loadAll(full){const {data:pd}=await sb.from("products").select("*").order("id");
+P=(pd||[]).map(r=>({id:r.id,name:r.name,cat:r.category,price:+r.price,stock:r.stock,imgs:r.images||[],ing:r.details||"",d:r.description||"",vars:Array.isArray(r.variants)?r.variants:[]}));
+const {data:st}=await sb.from("settings").select("key,value");(st||[]).forEach(r=>{if(r.key=="ship_fee")SHIP=+r.value;if(r.key=="free_over")FREE=+r.value;if(r.key=="video_url")LS.set("nc_video",r.value)});
+if(full){const {data:od}=await sb.from("orders").select("*, order_events(status,created_at)").order("created_at",{ascending:false});
+O=(od||[]).map(r=>({id:r.order_no,cust:r.customer,items:r.items,total:+r.total,pay:r.payment_method,status:r.status,events:(r.order_events||[]).map(e=>({s:e.status,t:e.created_at}))}))}}
+async function placeDB(c,key){
+const {data,error}=await sb.rpc("place_order",{p_customer:c,p_items:cart.map(l=>({id:l.id,q:l.q,v:l.v||null})),p_idem:key});
+if(error){const m=String(error.message||"");console.error("place_order failed",error);
+if(/failed to fetch|network|load failed/i.test(m))throw new Error("Connection problem. Your order may not have gone through. It is safe to press Place order again; we will not create a duplicate.");
+if(/could not find the function|schema cache/i.test(m))throw new Error("Checkout is being updated. Please try again in a few minutes.");
+throw new Error(m||"We could not place your order. Please try again.")}
+return data}
+async function trackDB(tk){const {data}=await sb.rpc("track_order",{p_token:tk.trim()});
+$("#tr").innerHTML=data?`<div class="box"><b>Order ${esc(data.order_no)}</b> · ${esc(data.status)} · ${rs(data.total)}<ol>${data.events.map(e=>`<li>${esc(e.status)} <span class="note">${new Date(e.created_at).toLocaleString()}</span></li>`).join("")}</ol><a class="btn o" href="order.html?t=${encodeURIComponent(tk.trim())}">Open order page</a></div>`:'<div class="empty">No order found for that tracking code.</div>'}
+const toBlob=file=>new Promise(r=>{const i=new Image();i.onload=()=>{const c=document.createElement("canvas"),s=Math.min(1,900/Math.max(i.width,i.height));c.width=i.width*s;c.height=i.height*s;c.getContext("2d").drawImage(i,0,0,c.width,c.height);c.toBlob(r,"image/jpeg",.82)};i.src=URL.createObjectURL(file)});
+async function adminDB(){const a=$("#admin"),on=!!window.NC_ADMIN;document.querySelector(".page-wrapper").hidden=on;a.hidden=!on;if(!on)return;
+const {data:{session}}=await sb.auth.getSession();
+if(!session){a.innerHTML='<div class="wrap"><h2>Admin login</h2><form id="lf" class="box pform"><input name="em" type="email" required placeholder="Email" autocomplete="username"><input name="pw" type="password" required placeholder="Password" autocomplete="current-password"><button class="btn">Log in</button><p class="note" id="lm"></p></form><a class="btn o" href="index.html">Back to store</a></div>';
+$("#lf").onsubmit=async e=>{e.preventDefault();const {error}=await sb.auth.signInWithPassword({email:e.target.em.value,password:e.target.pw.value});error?$("#lm").textContent=error.message:adminDB()};return}
+const {data:ad}=await sb.from("admins").select("user_id");
+if(!ad||!ad.length){a.innerHTML='<div class="wrap"><h2>Not an admin</h2><p>This account has not been added to the admins table.</p><button class="btn" id="lo">Log out</button></div>';$("#lo").onclick=async()=>{await sb.auth.signOut();location.href="index.html"};return}
+await loadAll(true);adminLocal();$("#admin .tabs").insertAdjacentHTML("beforeend",'<button id="lo">Log out</button>');$("#lo").onclick=async()=>{await sb.auth.signOut();location.href="index.html"};
+const pf=$("#pf");if(pf)pf.onsubmit=async e=>{e.preventDefault();const f=e.target,id=f.id.value,old=id?pr(id):null,urls=[];
+try{parseVars(f.vs.value,urls.length||f.files.files.length?new Array(f.files.files.length).fill("x"):(old?.imgs||[]),old?.vars)}catch(er){return alert(er.message)}
+for(const fl of f.files.files){const path=crypto.randomUUID()+".jpg",{error}=await sb.storage.from("product-images").upload(path,await toBlob(fl),{contentType:"image/jpeg"});if(error)return alert(error.message);urls.push(sb.storage.from("product-images").getPublicUrl(path).data.publicUrl)}
+const im=urls.length?urls:(old?.imgs||[]);let vars;try{vars=parseVars(f.vs.value,im,old?.vars)}catch(er){return alert(er.message)}
+const row={name:f.name.value,category:f.cat.value,price:+f.price.value,stock:vars.length?vars.reduce((a,v)=>a+v.stock,0):(+f.stock.value||0),description:f.d.value,details:old?.ing||"",images:im,variants:vars};if(id)row.id=+id;
+const {error}=await sb.from("products").upsert(row);if(error)return alert(error.message);await loadAll(true);adminDB();shop()};
+const sf=$("#sf");if(sf)sf.onsubmit=async e=>{e.preventDefault();const {error}=await sb.from("settings").upsert({key:"video_url",value:sf.v.value.trim()});error?alert(error.message):(LS.set("nc_video",sf.v.value.trim()),alert("Saved"))}}
+if(sb){document.addEventListener("click",async e=>{const x=e.target.closest("[data-x]");if(!x)return;e.stopImmediatePropagation();if(!confirm("Delete this product?"))return;const {error}=await sb.from("products").delete().eq("id",x.dataset.x);if(error)return alert(error.message);await loadAll(true);adminDB();shop()},true);
+document.addEventListener("change",async e=>{const o=e.target.dataset&&e.target.dataset.o;if(!o)return;e.stopImmediatePropagation();const {error}=await sb.rpc("set_order_status",{p_order_no:o,p_status:e.target.value});if(error)alert(error.message);else{await loadAll(true);adminDB()}},true);
+P=[];loadAll().then(()=>{shop();cartUI()})}
+document.addEventListener("submit",e=>{const f=e.target;if(f.dataset&&f.dataset.pid){e.preventDefault();e.stopPropagation();add(+f.dataset.pid,f.dataset.v||null);return}
+if(f.id=="cf"){e.preventDefault();e.stopPropagation();place(f);return}
+if(f.id=="qf"){e.preventDefault();track(f.t.value);return}
+if(f.tagName=="FORM"&&!f.classList.contains("pform")){e.preventDefault();e.stopPropagation();if(sb&&f.classList.contains("reservation-form")){const v=n=>(f.querySelector(`[name="${n}"]`)||{}).value||"";sb.from("enquiries").insert({name:v("name"),email:v("Email-address"),phone:v("Phone-number"),product:v("Product"),message:v("field")}).then(()=>{})}else if(sb&&f.classList.contains("newsletter-form")){const em=(f.querySelector('input[type="email"]')||{}).value||"";sb.from("enquiries").insert({name:"Newsletter signup",email:em,message:"Newsletter signup"}).then(()=>{})}const w=f.closest(".w-form"),d=w&&w.querySelector(".w-form-done");f.reset();if(d){f.style.display="none";d.style.display="block"}}},true);
+document.addEventListener("click",e=>{const t=e.target.closest("a,button,[data-q]");if(!t)return;const d=t.dataset,c=t.classList;
+if(c.contains("w-commerce-commercecartopenlink")||t.getAttribute("href")=="#cart"){e.preventDefault();const pg=location.pathname.split("/").pop();if(pg=="cart.html")scrollTo(0,0);else if(pg=="checkout.html")location.assign("cart.html");else tg(true)}
+else if(c.contains("w-commerce-commercecartcloselink")){e.preventDefault();tg(false)}
+else if(c.contains("w-commerce-commercecartcheckoutbutton")){e.preventDefault();if(cart.length){location.assign("checkout.html")}}
+else if(c.contains("video-lightbox")){e.preventDefault();openVid()}
+else if(t.getAttribute("href")=="#track"){e.preventDefault();$("#trk").showModal()}
+if(d.q){const l=cart.find(x=>lk(x)==d.q),p=l&&pr(l.id);if(!l||!p)return;if(+d.d>0&&l.q>=uStock(p,l.v))return;l.q+=+d.d;if(l.q<1)cart=cart.filter(x=>x!==l);cartUI()}
+if(d.rm){e.preventDefault();cart=cart.filter(x=>lk(x)!=d.rm);cartUI()}
+if(d.of!==undefined&&t.classList.contains("ofil")){ofilt=d.of;admin()}
+if(d.slip){const o=O.find(x=>x.id==d.slip);if(o)printSlips([o])}
+if(d.slipall){printSlips(O.filter(o=>["Placed","Confirmed","Packed"].includes(o.status)))}
+if(d.csv){exportOrders()}
+if(d.t){tab=d.t;admin()}
+if(d.x&&confirm("Delete this product?")){P=P.filter(p=>p.id!=d.x);save();admin();shop();cartUI()}
+if(d.e){const p=pr(d.e),f=$("#pf");f.id.value=p.id;f.name.value=p.name;f.cat.value=p.cat;f.price.value=p.price;f.stock.value=hasV(p)?"":p.stock;f.d.value=p.d;f.vs.value=varText(p);f.scrollIntoView()}
+if(t.id=="vx")$("#vid").close();if(t.id=="cx")$("#cko").close();if(t.id=="tx")$("#trk").close()});
+cw()&&cw().addEventListener("click",e=>{if(e.target==cw())tg(false)});
+document.addEventListener("change",e=>{const o=e.target.dataset.o;if(o){const x=O.find(y=>y.id==o);x.status=e.target.value;x.events.push({s:x.status,t:Date.now()});save();admin()}});
+$("#vid").addEventListener("close",()=>$("#vbody").innerHTML="");addEventListener("hashchange",admin);shop();cartUI();tg(false);admin();

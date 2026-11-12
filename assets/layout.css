@@ -1,0 +1,14 @@
+/* homefinity.pk – wide desktop layout: content uses the full screen width with a comfortable side gutter */
+:root{--gutter:clamp(16px,4.2vw,80px)}
+body .container,body .large-container,body .w-layout-blockcontainer.container{max-width:none;padding-left:var(--gutter);padding-right:var(--gutter)}
+body .hf-wrap,body .nc-wrap{max-width:none;padding-left:var(--gutter);padding-right:var(--gutter)}
+body .main-header .w-container{max-width:none}
+/* keep reading text comfortable on very wide screens */
+.hf-hero-copy p,.hf-story p,.hf-band p,.info .lead{max-width:56ch}
+/* product page: gallery never taller than the screen */
+.gal-main{max-height:calc(100vh - 150px)}
+.gal-main img{object-fit:cover}
+/* four featured columns grow to five on very wide screens */
+@media (min-width:1700px){.hf #hf-feat{grid-template-columns:repeat(5,minmax(0,1fr))}}
+/* the off-canvas Contact panel must never create sideways scrolling */
+html,body{overflow-x:clip}

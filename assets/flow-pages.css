@@ -1,0 +1,56 @@
+/* homefinity.pk – journal + contact pages (use together with flow-shop.css) */
+.hero-wrapper.fx{margin-top:0;padding-bottom:40px}
+.hero-wrapper.fx>.fx-ribbon{margin:0}
+.fx .inner-gap{height:clamp(16px,2vw,32px)}
+
+/* ---- journal ---- */
+.fx .blogs-section .section-subtitle{font:800 16px Manrope,sans-serif;animation:fxUp .7s var(--ease) both}
+.fx .blogs-section .section-title{font:400 clamp(56px,6.6vw,108px)/.92 'Bebas Neue',Impact,'Arial Narrow',sans-serif;letter-spacing:.004em;animation:fxUp .8s var(--ease) .08s both}
+.fx .blogs-section .section-text{font-size:clamp(16px,1.3vw,19px);animation:fxUp .8s var(--ease) .16s both}
+.fx .blog-collection{display:grid;grid-template-columns:repeat(auto-fit,minmax(clamp(280px,22vw,420px),1fr));gap:clamp(20px,2vw,36px)}
+.fx .blog-collection>.w-dyn-item{animation:fxUp .8s var(--ease) both}
+.fx .blog-collection>.w-dyn-item:nth-child(1){animation-delay:110ms}
+.fx .blog-collection>.w-dyn-item:nth-child(2){animation-delay:220ms}
+.fx .blog-collection>.w-dyn-item:nth-child(3){animation-delay:330ms}
+.fx .blog-collection>.w-dyn-item:nth-child(4){animation-delay:440ms}
+.fx .blog-collection>.w-dyn-item:nth-child(5){animation-delay:550ms}
+.fx .blog-collection>.w-dyn-item:nth-child(6){animation-delay:660ms}
+.fx .blog-block{height:100%;padding:14px;border-radius:34px;background:rgba(255,255,255,.94);border:1px solid #eadfc6;transition:box-shadow .5s var(--ease),border-color .3s,transform .5s var(--ease)!important}
+.fx .blog-block:hover{transform:translateY(-8px)!important;border-color:#d9c27a;box-shadow:0 34px 50px -28px rgba(16,22,20,.45)}
+.fx .blog-image-link{display:block;overflow:hidden;border-radius:24px}
+.fx .blog-image{display:block;width:100%;transition:transform .9s var(--ease)!important}
+.fx .blog-block:hover .blog-image{transform:scale(1.08)!important}
+.fx .blog-content-box{padding:20px 10px 8px}
+.fx .blog-title{font:400 clamp(30px,2.3vw,40px)/1 'Bebas Neue',Impact,sans-serif;letter-spacing:.02em}
+.fx .blog-meta-dot{animation:fxBeat 2s ease-out infinite}
+.fx .blog-title-link{transition:color .25s}.fx .blog-block:hover .blog-title-link{color:#d52b2b}
+
+/* ---- contact ---- */
+.fx .contact-grid{grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:clamp(28px,4vw,80px);align-items:start}
+.fx .reservation-form-block{position:relative;padding:clamp(24px,2.8vw,48px);border-radius:38px;background:rgba(255,255,255,.92);border:1px solid #eadfc6;box-shadow:0 40px 70px -40px rgba(16,22,20,.45);animation:fxUp .8s var(--ease) both}
+.fx .reservation-heading{font:400 clamp(40px,4vw,68px)/.95 'Bebas Neue',Impact,sans-serif;letter-spacing:.01em;text-align:left;margin-bottom:22px}
+.fx .reservation-input{min-height:58px;border:2px solid #e3d6b0!important;border-radius:16px!important;background:#fffdf7;font-size:16px;transition:border-color .25s,box-shadow .25s,background .25s}
+.fx .reservation-input:hover{border-color:#cdb978!important}
+.fx .reservation-input:focus{outline:0;border-color:#101614!important;background:#fff;box-shadow:0 0 0 5px rgba(213,43,43,.16)}
+.fx .reservation-input.textarea{min-height:150px}
+.fx .reservation-btn{position:relative;overflow:hidden;min-height:62px;font-size:17px}
+.fx .reservation-btn-box{position:relative;overflow:hidden;border-radius:99px}
+.fx .reservation-btn-box::after{content:"";position:absolute;top:0;left:-70%;width:40%;height:100%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.5),transparent);transform:skewX(-20deg);animation:fxShine 3.4s ease-in-out infinite;pointer-events:none}
+.fx .contact-right-box{animation:fxUp .8s var(--ease) .12s both}
+.fx .contact-title{font:400 clamp(48px,5vw,88px)/.92 'Bebas Neue',Impact,sans-serif;letter-spacing:.004em}
+.fx .contact-info{padding:20px 22px;margin:0 -22px;border-radius:22px;transition:background .3s,transform .4s var(--ease)}
+.fx .contact-info:hover{background:rgba(255,255,255,.85);transform:translateX(8px)}
+.fx .contact-info-subtitle{font-weight:800}
+.fx .contact-info-text{font-size:clamp(18px,1.5vw,22px)}
+.fx .contact-btn-box{opacity:1!important}
+
+@media (max-width:900px){.fx .contact-grid{grid-template-columns:1fr}.fx .contact-info{margin:0}}
+
+/* the template wraps the footer inside .hero-wrapper, so keep the colour behind the content only */
+.hero-wrapper.fx>.fx-bg{bottom:auto;height:clamp(900px,115vh,1250px)}
+.fx .contact-info{border-radius:0}
+.fx .contact-info:hover{border-radius:18px}
+.fx .blog-block{height:auto!important;display:block}
+.fx .blog-image-link{height:auto}
+.fx .blog-image{height:auto!important;aspect-ratio:4/3;object-fit:cover}
+.fx .blog-description{padding-bottom:6px}

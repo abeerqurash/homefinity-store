@@ -22,6 +22,12 @@ Run this once after the step above. Open **SQL Editor** > **New query**, paste e
 - New installs: `supabase_schema.sql` already includes it, so you do not need this file.
 - Existing installs: run `supabase_migration_checkout.sql` first if you have not, then this file. It is safe to run more than once and keeps your products and orders. Do it before you upload the new site files.
 
+
+### Categories and rich text descriptions update
+Run this once. Open **SQL Editor** > **New query**, paste everything from `supabase_migration_categories.sql` and click **Run**. It is safe to run more than once and keeps your products and orders. Do it before you upload the new site files.
+- **Admin > Categories**: add, rename, reorder and delete product categories. Renaming a category updates all its products. A category that still has products cannot be deleted.
+- **Admin > Products**: Category is now a dropdown filled from your categories. "Full description" and "Additional information" are rich text editors (Heading 2, Heading 3, bold, italic, lists, quote, link). The product name is the page's single H1; headings you add in the editors are H2/H3 and show below the product. Additional information appears under its own "Additional information" H2.
+
 ## 3. Create your admin login
 1. Go to **Authentication** > **Users** > **Add user** > **Create new user**. Enter your email and a strong password. Tick "Auto confirm user".
 2. Go to **SQL Editor** and run this (use your own email):

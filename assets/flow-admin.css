@@ -134,3 +134,28 @@ body:has(#admin:not([hidden])){background:#f3f1ec}
 .adm-brand{flex-wrap:wrap;row-gap:8px}
 .adm-brand small{display:block;margin:0;width:max-content;flex-basis:100%;background:none;padding:0;color:#8b9690}
 .spark{width:32%!important;right:16px}
+
+/* rich text editor + categories */
+.rte-l{font:700 13px Manrope,sans-serif;letter-spacing:.02em;color:var(--ink,#101614);margin:6px 0 -4px}
+#admin .pform .note{margin:0;font-size:13px;color:var(--mut)}
+.rte{border:1px solid #cfc9b8;border-radius:14px;background:#fff;overflow:hidden}
+.rte:focus-within{border-color:var(--ink,#101614);box-shadow:0 0 0 4px rgba(213,43,43,.14)}
+.rte-t{display:flex;flex-wrap:wrap;gap:6px;padding:8px;background:#f6f2e7;border-bottom:1px solid #e4dfce;position:sticky;top:0;z-index:2}
+#admin .rte-btn{all:unset;box-sizing:border-box;cursor:pointer;min-width:38px;height:34px;padding:0 10px;display:inline-flex;align-items:center;justify-content:center;border:1px solid #d8d2bf;border-radius:9px;background:#fff;font:700 13px Manrope,sans-serif;color:#101614}
+#admin .rte-btn:hover{background:#101614;color:#fff;border-color:#101614}
+#admin .rte-btn:focus-visible{outline:2px solid var(--red,#d52b2b);outline-offset:2px}
+#admin .rte-btn.rb-i{font-style:italic}
+.rte-b{min-height:170px;max-height:460px;overflow:auto;padding:16px 18px;font:500 16px/1.65 Manrope,sans-serif;color:#26241f;outline:0}
+.rte-b:empty:before{content:attr(data-ph);color:#9a9585;pointer-events:none}
+.rte-b h2,.prose h2{font:800 26px/1.2 Manrope,sans-serif;letter-spacing:-.015em;margin:1.2em 0 .5em}
+.rte-b h3,.prose h3{font:800 20px/1.25 Manrope,sans-serif;margin:1.1em 0 .4em}
+.rte-b h4,.prose h4{font:800 17px/1.3 Manrope,sans-serif;margin:1em 0 .4em}
+.rte-b p,.prose p{margin:0 0 1em}
+.rte-b ul,.rte-b ol,.prose ul,.prose ol{margin:0 0 1em;padding-left:1.4em}
+.rte-b li,.prose li{margin:0 0 .35em}
+.rte-b blockquote,.prose blockquote{margin:1em 0;padding:.4em 1.1em;border-left:4px solid #d52b2b;background:#faf6ea;border-radius:0 10px 10px 0}
+.rte-b a,.prose a{color:#d52b2b;text-decoration:underline}
+.rte-b>:first-child,.prose>:first-child{margin-top:0}
+.rte-b h2,.rte-b h3,.rte-b h4{font-family:Manrope,system-ui,sans-serif!important;text-transform:none!important;color:#101614}
+.rte-l+.note{margin-top:6px!important}
+.rte-w{display:grid;gap:8px}

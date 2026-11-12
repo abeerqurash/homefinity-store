@@ -9,6 +9,44 @@ const seed=[
 {id:5,name:"2-in-1 Oil Spray Jug",cat:"Kitchen Tools",price:650,stock:3,imgs:["oil"],ing:"Pours or sprays. Box packing.",d:"Oil dispenser for cooking and salads."},
 {id:6,name:"Stainless Steel Garlic Press",cat:"Kitchen Tools",price:350,stock:40,imgs:["garlic"],ing:"Stainless steel, comfortable grip.",d:"Press garlic in one squeeze."}].map(p=>({...p,imgs:p.imgs.map(k=>I[k]),vars:(p.vars||[]).map(v=>({...v,img:v.img?I[v.img]:""}))}));
 let P=LS.get("nc_p",null)||seed,O=LS.get("nc_o",[]),cart=LS.get("nc_c",[]),tab="dash";
+/* ---- rich text (safe HTML) + product categories ---- */
+const OKT=new Set(["P","BR","H2","H3","H4","STRONG","B","EM","I","U","UL","OL","LI","A","BLOCKQUOTE","HR"]);
+function cleanHTML(h){const d=new DOMParser().parseFromString("<body>"+String(h||"")+"</body>","text/html");
+const un=c=>{while(c.firstChild)c.parentNode.insertBefore(c.firstChild,c);c.remove()};
+(function walk(n){[...n.childNodes].forEach(c=>{
+if(c.nodeType==3)return;if(c.nodeType!=1){c.remove();return}
+const t=c.tagName;
+if(["SCRIPT","STYLE","IFRAME","OBJECT","EMBED","NOSCRIPT","TEMPLATE","SVG","FORM","INPUT","BUTTON","TEXTAREA","SELECT"].includes(t)){c.remove();return}
+walk(c);
+if(t=="H1"||t=="H5"||t=="H6"||t=="DIV"){const r=d.createElement(t=="DIV"?"p":t=="H1"?"h2":"h4");while(c.firstChild)r.appendChild(c.firstChild);c.replaceWith(r);return}
+if(!OKT.has(t)){un(c);return}
+[...c.attributes].forEach(a=>{if(!(t=="A"&&a.name=="href"))c.removeAttribute(a.name)});
+if(t=="A"){const h=c.getAttribute("href")||"";if(!/^(https?:\/\/|mailto:|tel:)/i.test(h)){un(c);return}c.setAttribute("target","_blank");c.setAttribute("rel","noopener noreferrer nofollow")}
+})})(d.body);
+const INL=new Set(["A","B","STRONG","EM","I","U","BR"]);let run=[];const flush=()=>{if(!run.length)return;if(run.every(x=>x.nodeType==3&&!x.textContent.trim()||x.tagName=="BR")){run.forEach(x=>x.remove())}else{const w=d.createElement("p");run[0].before(w);run.forEach(x=>w.appendChild(x))}run=[]};
+[...d.body.childNodes].forEach(c=>{if(c.nodeType==3||INL.has(c.tagName))run.push(c);else flush()});flush();
+return d.body.innerHTML.trim()}
+const rt=h=>{h=cleanHTML(h);return h.replace(/<(?!hr)[^>]*>|&nbsp;|\s/g,"")?h:""};
+const slug=s=>String(s||"").toLowerCase().trim().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"");
+const deriveC=()=>[...new Set(P.map(p=>p.cat).filter(Boolean))].map((n,i)=>({id:i+1,name:n,slug:slug(n),desc:"",sort:(i+1)*10}));
+let C=LS.get("nc_cat",null)||deriveC(),catOK=true;
+const cOrd=()=>[...C].sort((a,b)=>((+a.sort||0)-(+b.sort||0))||a.name.localeCompare(b.name));
+const catList=()=>{const used=new Set(P.map(p=>p.cat)),o=cOrd().map(c=>c.name).filter(n=>used.has(n));used.forEach(n=>{if(n&&!o.includes(n))o.push(n)});return o};
+const RTB=[["h2","H2","Heading 2"],["h3","H3","Heading 3"],["p","Text","Normal paragraph"],["b","B","Bold"],["i","I","Italic"],["ul","• List","Bullet list"],["ol","1. List","Numbered list"],["q","Quote","Quote"],["a","Link","Add link"],["x","Clear","Clear formatting"]];
+const rte=(k,label,html,hint)=>`<div class="rte-w" data-rte="${k}"><label class="rte-l">${label}</label>${hint?`<p class="note">${hint}</p>`:""}<div class="rte"><div class="rte-t" role="toolbar" aria-label="${esc(label)} formatting">${RTB.map(([c,t,a])=>`<button type="button" class="rte-btn rb-${c}" data-rc="${c}" title="${a}" aria-label="${a}">${t}</button>`).join("")}</div><div class="rte-b" contenteditable="true" role="textbox" aria-multiline="true" aria-label="${esc(label)}" data-ph="Write here. Use the buttons above for headings, bold and lists.">${cleanHTML(html)}</div></div></div>`;
+const rget=(f,k)=>rt(f.querySelector('[data-rte="'+k+'"] .rte-b').innerHTML);
+const rset=(f,k,h)=>{f.querySelector('[data-rte="'+k+'"] .rte-b').innerHTML=cleanHTML(h)};
+const setCat=(f,v)=>{if(v&&![...f.cat.options].some(o=>o.value==v))f.cat.add(new Option(v+" (not in your categories)",v));f.cat.value=v||""};
+document.addEventListener("mousedown",e=>{if(e.target.closest(".rte-btn"))e.preventDefault()});
+document.addEventListener("focusin",e=>{if(e.target.closest&&e.target.closest(".rte-b")){try{document.execCommand("defaultParagraphSeparator",false,"p")}catch(_){}}});
+document.addEventListener("click",e=>{const b=e.target.closest(".rte-btn");if(!b)return;e.preventDefault();const ed=b.closest(".rte").querySelector(".rte-b"),c=b.dataset.rc,x=(a,v)=>document.execCommand(a,false,v);ed.focus();
+try{x("defaultParagraphSeparator","p")}catch(_){}
+const blk=(tag)=>x("formatBlock",String(document.queryCommandValue("formatBlock")).toLowerCase()==tag.toLowerCase()?"P":tag);
+if(c=="h2")blk("H2");else if(c=="h3")blk("H3");else if(c=="p")x("formatBlock","P");else if(c=="q")blk("BLOCKQUOTE");
+else if(c=="b")x("bold");else if(c=="i")x("italic");else if(c=="ul")x("insertUnorderedList");else if(c=="ol")x("insertOrderedList");
+else if(c=="x"){x("removeFormat");x("formatBlock","P");x("unlink")}
+else if(c=="a"){const u=(prompt("Link address, starting with https://")||"").trim();if(u){if(/^(https?:\/\/|mailto:|tel:)/i.test(u))x("createLink",u);else alert("The link must start with https://")}}});
+document.addEventListener("paste",e=>{const ed=e.target.closest&&e.target.closest(".rte-b");if(!ed)return;e.preventDefault();const cd=e.clipboardData,h=cd.getData("text/html"),t=cd.getData("text/plain");document.execCommand("insertHTML",false,h?cleanHTML(h):esc(t).replace(/\n/g,"<br>"))});
 let SHIP=200,FREE=3000;const STAT=["Placed","Confirmed","Packed","Dispatched","Delivered","Cancelled"];
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)],rs=n=>"Rs. "+Number(n).toLocaleString("en-PK"),pr=id=>P.find(x=>x.id==id);
 /* ---- product options (colour / size): helpers. A cart line is {id,q} or {id,q,v}. ---- */
@@ -20,7 +58,7 @@ let save=()=>{LS.set("nc_p",P);LS.set("nc_o",O)};
 $$("img[data-k]").forEach(e=>e.src=I[e.dataset.k]);
 const item=(p,i)=>`<div class="w-dyn-list${i?"":" act"}"><div class="w-dyn-items"><div class="w-dyn-item"><div class="menus-box"><div class="product-details-wrapper"><div class="product-details-wrap"><a class="product-img-wrap w-inline-block" href="products.html"><img class="menu-image" src="${p.imgs[0]||""}" alt="${esc(p.name)}"></a><div class="ingredients-box"><p class="ingredients-details">Details:</p><p class="product-ingredients">${esc(p.ing||"")}</p></div><div>${p.stock>0?(hasV(p)?`<a class="primary-button product-button" href="product.html?id=${p.id}">Choose option</a>`:`<form class="menu-cart-default-state" data-pid="${p.id}"><input class="primary-button product-button" type="submit" value="Add to Cart"></form>`):`<p class="ingredients-details">Out of stock</p>`}</div></div></div><div class="menu-list"><div class="menu-list-title-box"><a class="menu-list-title-link w-inline-block" href="products.html"><h3 class="menu-list-title${i?"":" active"}">${esc(p.name)}</h3></a><div class="menu-list-line nc-dots"></div><h4 class="menu-list-price">${varies(p)?"From ":""}${rs(fromP(p))}</h4></div><p class="menu-list-text">${esc(p.d||"")}</p></div></div></div></div></div>`;
 function wire(){$$(".menu-content-box").forEach(b=>{const L=[...b.querySelectorAll(".w-dyn-list")],on=l=>L.forEach(x=>{x.classList.toggle("act",x==l);x.querySelector(".menu-list-title").classList.toggle("active",x==l)});L.forEach(l=>{l.addEventListener("mouseenter",()=>on(l));l.addEventListener("click",()=>on(l))})})}
-function shop(){const cats=[...new Set(P.map(p=>p.cat))];
+function shop(){const cats=catList();
 $$(".menu-dropdown").forEach((dd,k)=>{const c=cats[k];dd.style.display=c?"":"none";if(!c)return;dd.querySelector(".menu-title").textContent=c;dd.querySelector(".menu-content-box").innerHTML=P.filter(p=>p.cat==c).map(item).join("")});
 $$(".product-section .w-dyn-item").forEach((el,k)=>{const p=P[k];el.style.display=p?"":"none";if(!p)return;
 el.querySelector(".product-title").textContent=p.name;el.querySelector(".product-text").textContent=p.d;el.querySelector(".product-price").textContent=(varies(p)?"From ":"")+rs(fromP(p));el.querySelector(".product-img").src=p.imgs[0]||"";
@@ -80,7 +118,7 @@ const rows=[["Order","Date","Status","Name","Phone","Email","Address","City","Pr
 const b=new Blob(["\ufeff"+rows.map(r=>r.map(q).join(",")).join("\r\n")],{type:"text/csv"}),a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="homefinity-orders-"+new Date().toISOString().slice(0,10)+".csv";document.body.appendChild(a);a.click();a.remove()}
 let ofilt="";
 const IC={dash:'<path d="M3 13h8V3H3zM13 21h8V11h-8zM3 21h8v-6H3zM13 3v6h8V3z"/>',prod:'<path d="M21 8 12 3 3 8l9 5zM3 8v8l9 5 9-5V8M12 13v8"/>',ord:'<path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4zM3 6h18M16 10a4 4 0 0 1-8 0"/>',set:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>',money:'<path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>',bag:'<path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4zM3 6h18"/>',tag:'<path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L2 12V2h10l8.6 8.6a2 2 0 0 1 0 2.8zM7 7h.01"/>',clock:'<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>'};
-const ico=k=>`<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${IC[k]||""}</svg>`;
+const ico=k=>`<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${IC[k]||(k=="cat"?IC.tag:"")}</svg>`;
 const oT=o=>+new Date((o.events&&o.events[0]&&o.events[0].t)||Date.now());
 const dKey=t=>{const d=new Date(t);d.setHours(0,0,0,0);return +d};
 function dayData(n){const end=dKey(Date.now()),days=[],rev=Array(n).fill(0),cnt=Array(n).fill(0);for(let i=n-1;i>=0;i--)days.push(end-i*864e5);
@@ -97,7 +135,7 @@ return `<svg class="rc" viewBox="0 0 ${W} ${H}" role="img" aria-label="Revenue o
 const STC={Placed:"#d9a21b",Confirmed:"#2f6fdd",Packed:"#7a4fd6",Dispatched:"#0f9b9b",Delivered:"#1d8a4a",Cancelled:"#d03a3a"};
 function adminLocal(){const a=$("#admin"),on=!!window.NC_ADMIN;a.hidden=!on;document.querySelector(".page-wrapper").hidden=on;if(!on)return;
 const rev=O.filter(o=>o.status!="Cancelled").reduce((s,o)=>s+o.total,0);
-const openN=O.filter(o=>["Placed","Confirmed","Packed"].includes(o.status)).length;const tabs=[["dash","Dashboard"],["prod","Products"],["ord","Orders"]].map(([k,n])=>`<button data-t="${k}" aria-pressed="${tab==k}">${ico(k)}<span>${n}</span>${k=="ord"&&openN?`<em class="cnt">${openN}</em>`:""}</button>`).join("");let body="";
+const openN=O.filter(o=>["Placed","Confirmed","Packed"].includes(o.status)).length;const tabs=[["dash","Dashboard"],["prod","Products"],["cat","Categories"],["ord","Orders"]].map(([k,n])=>`<button data-t="${k}" aria-pressed="${tab==k}">${ico(k)}<span>${n}</span>${k=="ord"&&openN?`<em class="cnt">${openN}</em>`:""}</button>`).join("");let body="";
 if(tab=="dash"){const d=dayData(14),all=O.filter(o=>o.status!="Cancelled"),openO=O.filter(o=>["Placed","Confirmed","Packed"].includes(o.status)),
 avg=all.length?Math.round(rev/all.length):0,agg={};O.filter(o=>o.status!="Cancelled").forEach(o=>(o.items||[]).forEach(i=>{const a=agg[i.name]||(agg[i.name]={n:i.name,u:0,r:0});a.u+=+i.q||0;a.r+=(+i.price||0)*(+i.q||0)}));
 const top=Object.values(agg).sort((a,b)=>b.u-a.u).slice(0,5),tm=Math.max(...top.map(x=>x.u),1);
@@ -110,16 +148,18 @@ body=`<div class="kpis">${kpi("Revenue","money",rs(rev),dlt(delta(d.rev)),spark(
 <div class="adm-row r111"><section class="card"><header><h3>Top products</h3><span class="note">By units sold</span></header>${top.length?`<ol class="tops">${top.map((x,i)=>`<li><span class="rk">${i+1}</span><div><b>${esc(x.n)}</b><div class="tb"><i style="width:${x.u/tm*100}%"></i></div></div><span class="tv">${x.u} sold<small>${rs(x.r)}</small></span></li>`).join("")}</ol>`:'<div class="empty">No sales yet.</div>'}</section>
 <section class="card"><header><h3>Low or out of stock</h3><span class="note">${low.length} item${low.length==1?"":"s"}</span></header>${low.length?`<ul class="lows">${low.map(x=>`<li><span>${esc(x.n)}</span><b class="${x.s<=0?"out":"low"}">${x.s<=0?"Out":x.s+" left"}</b></li>`).join("")}</ul>`:'<div class="empty">All products well stocked.</div>'}</section>
 <section class="card wide"><header><h3>Recent orders</h3><button class="lnk" data-t="ord">View all →</button></header>${O.length?`<div class="tw"><table class="tbl"><thead><tr><th>Order</th><th>Customer</th><th>Date</th><th class="n">Total</th><th>Status</th></tr></thead><tbody>${O.slice(0,6).map(o=>`<tr><td><b>${esc(o.id)}</b></td><td>${esc((o.cust||{}).name||"")}<small>${esc((o.cust||{}).city||"")}</small></td><td>${esc(oDate(o))}</td><td class="n">${rs(o.total)}</td><td><span class="bd bd-${String(o.status).toLowerCase()}">${esc(o.status)}</span></td></tr>`).join("")}</tbody></table></div>`:'<div class="empty">No orders yet.</div>'}</section></div>`}
-if(tab=="prod")body=`<form id="pf" class="box pform"><input type="hidden" name="id"><input name="name" required placeholder="Product name"><input name="cat" required placeholder="Category" list="cl"><datalist id="cl">${[...new Set(P.map(p=>p.cat))].map(c=>`<option value="${esc(c)}">`).join("")}</datalist><input name="price" type="number" min="0" required placeholder="Price (Rs.)"><input name="stock" type="number" min="0" placeholder="Stock (ignored when the product has options)"><textarea name="d" placeholder="Description"></textarea><label class="note" for="vs">Options such as colour or size (optional). One per line: <code>Name | stock | price | SKU | photo number</code>. Price, SKU and photo number can be left out. Example: <code>Pink | 12 | 1500 | NICE-PNK | 2</code></label><textarea name="vs" id="vs" rows="4" placeholder="Pink | 12 | 1500 | NICE-PNK | 2&#10;Mint | 8"></textarea><input name="files" type="file" accept="image/*" multiple aria-label="Photos"><button class="btn">Save product</button></form>
+if(tab=="prod")body=`<form id="pf" class="box pform"><input type="hidden" name="id"><input name="name" required placeholder="Product name"><label class="rte-l" for="pcat">Category</label><select name="cat" id="pcat" required><option value="">Choose a category…</option>${cOrd().map(c=>`<option value="${esc(c.name)}">${esc(c.name)}</option>`).join("")}</select><p class="note">${C.length?"Need another category?":"You have no categories yet."} <button type="button" class="lnk" data-t="cat">Manage categories</button></p><input name="price" type="number" min="0" required placeholder="Price (Rs.)"><input name="stock" type="number" min="0" placeholder="Stock (ignored when the product has options)"><textarea name="d" maxlength="300" placeholder="Short summary (plain text, shown under the product title)"></textarea>${rte("ld","Full description","","Shown below the product photos and price. Use Heading 2 for section titles. The product name above is the page's main heading (H1).")}${rte("ex","Additional information","","Shown under an 'Additional information' heading, for example size, material and care.")}<label class="note" for="vs">Options such as colour or size (optional). One per line: <code>Name | stock | price | SKU | photo number</code>. Price, SKU and photo number can be left out. Example: <code>Pink | 12 | 1500 | NICE-PNK | 2</code></label><textarea name="vs" id="vs" rows="4" placeholder="Pink | 12 | 1500 | NICE-PNK | 2&#10;Mint | 8"></textarea><input name="files" type="file" accept="image/*" multiple aria-label="Photos"><button class="btn">Save product</button></form>
 ${P.map(p=>`<div class="line"><img src="${p.imgs[0]||""}" alt=""><div><b>${esc(p.name)}</b><div class="note">${esc(p.cat)} · ${hasV(p)?"from "+rs(fromP(p))+" · "+p.vars.length+" option"+(p.vars.length==1?"":"s"):rs(p.price)} · stock ${p.stock}</div></div><span class="qty"><button class="btn o" data-e="${p.id}">Edit</button><button class="btn o" data-x="${p.id}">Delete</button></span></div>`).join("")}`;
+if(tab=="cat"){const cnt=n=>P.filter(p=>p.cat==n).length;
+body=`${sb&&!catOK?'<div class="box note">The categories table is missing. Run <code>supabase_migration_categories.sql</code> in Supabase, SQL Editor, then refresh this page.</div>':""}<form id="catf" class="box pform"><input type="hidden" name="cid"><input name="cname" required maxlength="60" placeholder="Category name, e.g. Insulated Bottles"><textarea name="cdesc" maxlength="400" placeholder="Short description (optional). Shown on the shop page when this category is chosen."></textarea><input name="csort" type="number" placeholder="Order (smaller shows first, e.g. 10). Leave empty to add at the end."><button class="btn">Save category</button><button type="button" class="btn o" id="catx" hidden>Cancel edit</button></form>${cOrd().map(c=>`<div class="line"><div><b>${esc(c.name)}</b><div class="note">${cnt(c.name)} product${cnt(c.name)==1?"":"s"} · order ${esc(c.sort)}${c.desc?" · "+esc(c.desc.slice(0,80)):""}</div></div><span class="qty"><button class="btn o" data-ce="${c.id}">Edit</button><button class="btn o" data-cx="${c.id}">Delete</button></span></div>`).join("")||'<div class="empty card">No categories yet. Add your first one above.</div>'}`}
 if(tab=="ord"){const list=O.filter(o=>!ofilt||o.status==ofilt);
 const card=o=>{const c=o.cust||{},n=(o.items||[]).reduce((a,i)=>a+(+i.q||0),0);return `<article class="oc"><header><div class="oc-l"><b class="oid">${esc(o.id)}</b><span class="bd bd-${String(o.status).toLowerCase()}">${esc(o.status)}</span></div><div class="oc-r"><b>${rs(o.total)}</b><span class="note">${esc(oDate(o))} · ${esc(o.pay||"")}</span></div></header><div class="oc-g"><div><h4>Customer</h4><p><b>${esc(c.name||"")}</b><br>${esc(c.phone||"")}${c.email?"<br>"+esc(c.email):""}</p><p class="note">${esc(oAddr(c))}${c.landmark?"<br>Landmark: "+esc(c.landmark):""}${c.note?"<br>Note: "+esc(c.note):""}</p></div><div><h4>Items (${n})</h4><ul class="oi">${(o.items||[]).map(i=>`<li><span>${esc(i.name)}${i.vl?" <i>("+esc(i.vl)+")</i>":""}</span><b>×${i.q}</b></li>`).join("")}</ul></div><div><h4>Progress</h4><ol class="otl">${(o.events||[]).map(e=>`<li><b>${esc(e.s)}</b><span>${new Date(e.t).toLocaleString("en-PK")}</span></li>`).join("")}</ol></div></div><footer><button class="btn o" data-slip="${o.id}">Print packing slip</button><label>Status <select data-o="${o.id}">${STAT.map(s=>`<option${s==o.status?" selected":""}>${s}</option>`).join("")}</select></label></footer></article>`};
 body=`<div class="otools"><div class="chips">${["",...STAT].map(k=>`<button class="ofil${ofilt==k?" on":""}" data-of="${k}">${k||"All"}<em>${k?O.filter(o=>o.status==k).length:O.length}</em></button>`).join("")}</div><span class="grow"></span>${O.length?'<button class="btn" data-slipall="1">Print open slips</button><button class="btn o" data-csv="1">Export CSV</button>':""}</div>`+(list.map(card).join("")||'<div class="empty card">No orders'+(ofilt?" with status "+ofilt:" yet")+'.</div>')}
-const TT={dash:"Dashboard",prod:"Products",ord:"Orders",set:"Settings"},SS={dash:new Date().toLocaleDateString("en-PK",{weekday:"long",day:"numeric",month:"long",year:"numeric"}),prod:P.length+" product"+(P.length==1?"":"s")+" in your catalogue",ord:O.length+" order"+(O.length==1?"":"s")+" in total",set:"Store settings"};
+const TT={dash:"Dashboard",prod:"Products",cat:"Categories",ord:"Orders",set:"Settings"},SS={dash:new Date().toLocaleDateString("en-PK",{weekday:"long",day:"numeric",month:"long",year:"numeric"}),prod:P.length+" product"+(P.length==1?"":"s")+" in your catalogue",ord:O.length+" order"+(O.length==1?"":"s")+" in total",set:"Store settings",cat:C.length+" categor"+(C.length==1?"y":"ies")+" for your products"};
 a.innerHTML=`<div class="adm"><aside class="adm-side"><div class="adm-brand">homefinity<span>.pk</span><small>Admin</small></div><nav class="tabs" aria-label="Admin">${tabs}</nav><a class="adm-back" href="index.html">← Back to store</a></aside><section class="adm-main"><header class="adm-top"><div><h2>${TT[tab]}</h2><p class="note">${SS[tab]}</p></div>${sb?"":'<span class="adm-demo">Demo mode · data stays in this browser</span>'}</header>${body}</section></div>`;
-const sf=$("#sf");if(sf)sf.onsubmit=e=>{e.preventDefault();LS.set("nc_video",sf.v.value.trim());alert("Saved")};const f=$("#pf");if(f)f.onsubmit=async e=>{e.preventDefault();const id=+f.id.value||Date.now(),old=pr(id),n=await imgs(f.files.files);
+bindCat();const sf=$("#sf");if(sf)sf.onsubmit=e=>{e.preventDefault();LS.set("nc_video",sf.v.value.trim());alert("Saved")};const f=$("#pf");if(f)f.onsubmit=async e=>{e.preventDefault();const id=+f.id.value||Date.now(),old=pr(id),n=await imgs(f.files.files);
 const im=n.length?n:(old?.imgs||[]);let vars;try{vars=parseVars(f.vs.value,im,old?.vars)}catch(er){return alert(er.message)}
-const p={id,name:f.name.value,cat:f.cat.value,price:+f.price.value,stock:vars.length?vars.reduce((a,v)=>a+v.stock,0):(+f.stock.value||0),d:f.d.value,imgs:im,vars};
+const p={id,name:f.name.value,cat:f.cat.value,price:+f.price.value,stock:vars.length?vars.reduce((a,v)=>a+v.stock,0):(+f.stock.value||0),d:f.d.value,long:rget(f,"ld"),extra:rget(f,"ex"),ing:old?.ing||"",imgs:im,vars};
 P=old?P.map(x=>x.id==id?p:x):[...P,p];save();admin();shop()}}
 function openVid(){const u=LS.get("nc_video",""),m=u.match(/(?:youtu\.be\/|v=|embed\/)([\w-]{11})/);let h;
 if(m)h=`<iframe src="https://www.youtube-nocookie.com/embed/${m[1]}?autoplay=1" allow="autoplay;encrypted-media;fullscreen" allowfullscreen style="aspect-ratio:16/9;border:0"></iframe>`;
@@ -193,7 +233,8 @@ ready:()=>new Promise(res=>{let n=0;(function w(){if(P.length||++n>100)res();els
 
 
 async function loadAll(full){const {data:pd}=await sb.from("products").select("*").order("id");
-P=(pd||[]).map(r=>({id:r.id,name:r.name,cat:r.category,price:+r.price,stock:r.stock,imgs:r.images||[],ing:r.details||"",d:r.description||"",vars:Array.isArray(r.variants)?r.variants:[]}));
+P=(pd||[]).map(r=>({id:r.id,name:r.name,cat:r.category,price:+r.price,stock:r.stock,imgs:r.images||[],ing:r.details||"",d:r.description||"",vars:Array.isArray(r.variants)?r.variants:[],long:r.long_description||"",extra:r.extra_info||""}));
+const {data:cd,error:ce}=await sb.from("categories").select("*").order("sort").order("name");catOK=!ce;C=ce?deriveC():(cd||[]).map(r=>({id:r.id,name:r.name,slug:r.slug,desc:r.description||"",sort:r.sort||0}));
 const {data:st}=await sb.from("settings").select("key,value");(st||[]).forEach(r=>{if(r.key=="ship_fee")SHIP=+r.value;if(r.key=="free_over")FREE=+r.value;if(r.key=="video_url")LS.set("nc_video",r.value)});
 if(full){const {data:od}=await sb.from("orders").select("*, order_events(status,created_at)").order("created_at",{ascending:false});
 O=(od||[]).map(r=>({id:r.order_no,cust:r.customer,items:r.items,total:+r.total,pay:r.payment_method,status:r.status,events:(r.order_events||[]).map(e=>({s:e.status,t:e.created_at}))}))}}
@@ -218,7 +259,7 @@ const pf=$("#pf");if(pf)pf.onsubmit=async e=>{e.preventDefault();const f=e.targe
 try{parseVars(f.vs.value,urls.length||f.files.files.length?new Array(f.files.files.length).fill("x"):(old?.imgs||[]),old?.vars)}catch(er){return alert(er.message)}
 for(const fl of f.files.files){const path=crypto.randomUUID()+".jpg",{error}=await sb.storage.from("product-images").upload(path,await toBlob(fl),{contentType:"image/jpeg"});if(error)return alert(error.message);urls.push(sb.storage.from("product-images").getPublicUrl(path).data.publicUrl)}
 const im=urls.length?urls:(old?.imgs||[]);let vars;try{vars=parseVars(f.vs.value,im,old?.vars)}catch(er){return alert(er.message)}
-const row={name:f.name.value,category:f.cat.value,price:+f.price.value,stock:vars.length?vars.reduce((a,v)=>a+v.stock,0):(+f.stock.value||0),description:f.d.value,details:old?.ing||"",images:im,variants:vars};if(id)row.id=+id;
+const row={name:f.name.value,category:f.cat.value,price:+f.price.value,stock:vars.length?vars.reduce((a,v)=>a+v.stock,0):(+f.stock.value||0),description:f.d.value,long_description:rget(f,"ld"),extra_info:rget(f,"ex"),details:old?.ing||"",images:im,variants:vars};if(id)row.id=+id;
 const {error}=await sb.from("products").upsert(row);if(error)return alert(error.message);await loadAll(true);adminDB();shop()};
 const sf=$("#sf");if(sf)sf.onsubmit=async e=>{e.preventDefault();const {error}=await sb.from("settings").upsert({key:"video_url",value:sf.v.value.trim()});error?alert(error.message):(LS.set("nc_video",sf.v.value.trim()),alert("Saved"))}}
 if(sb){document.addEventListener("click",async e=>{const x=e.target.closest("[data-x]");if(!x)return;e.stopImmediatePropagation();if(!confirm("Delete this product?"))return;const {error}=await sb.from("products").delete().eq("id",x.dataset.x);if(error)return alert(error.message);await loadAll(true);adminDB();shop()},true);
@@ -242,8 +283,31 @@ if(d.slipall){printSlips(O.filter(o=>["Placed","Confirmed","Packed"].includes(o.
 if(d.csv){exportOrders()}
 if(d.t){tab=d.t;admin()}
 if(d.x&&confirm("Delete this product?")){P=P.filter(p=>p.id!=d.x);save();admin();shop();cartUI()}
-if(d.e){const p=pr(d.e),f=$("#pf");f.id.value=p.id;f.name.value=p.name;f.cat.value=p.cat;f.price.value=p.price;f.stock.value=hasV(p)?"":p.stock;f.d.value=p.d;f.vs.value=varText(p);f.scrollIntoView()}
+if(d.e){const p=pr(d.e),f=$("#pf");f.id.value=p.id;f.name.value=p.name;setCat(f,p.cat);f.price.value=p.price;f.stock.value=hasV(p)?"":p.stock;f.d.value=p.d;rset(f,"ld",p.long);rset(f,"ex",p.extra);f.vs.value=varText(p);f.scrollIntoView()}
 if(t.id=="vx")$("#vid").close();if(t.id=="cx")$("#cko").close();if(t.id=="tx")$("#trk").close()});
 cw()&&cw().addEventListener("click",e=>{if(e.target==cw())tg(false)});
 document.addEventListener("change",e=>{const o=e.target.dataset.o;if(o){const x=O.find(y=>y.id==o);x.status=e.target.value;x.events.push({s:x.status,t:Date.now()});save();admin()}});
 $("#vid").addEventListener("close",()=>$("#vbody").innerHTML="");addEventListener("hashchange",admin);shop();cartUI();tg(false);admin();
+
+/* ---- admin: categories ---- */
+function bindCat(){const f=$("#catf");if(f)f.onsubmit=e=>{e.preventDefault();catSave(f)}}
+async function catSave(f){
+const id=f.cid.value,name=f.cname.value.trim().replace(/\s+/g," "),desc=f.cdesc.value.trim(),sort=f.csort.value===""?(Math.max(0,...C.map(c=>+c.sort||0))+10):Math.floor(+f.csort.value);
+if(!name)return alert("Please enter a category name.");
+if(C.some(c=>c.name.toLowerCase()==name.toLowerCase()&&c.id!=id))return alert("A category with this name already exists.");
+const old=id?C.find(c=>c.id==id):null,sl=slug(name)||("cat-"+Date.now().toString(36));
+if(sb){const row={name,slug:sl,description:desc,sort};if(id)row.id=+id;
+const {error}=await sb.from("categories").upsert(row);if(error)return alert(error.message);
+if(old&&old.name!=name){const {error:e2}=await sb.from("products").update({category:name}).eq("category",old.name);if(e2)return alert(e2.message)}
+await loadAll(true);adminDB();shop()}
+else{if(old){P.forEach(p=>{if(p.cat==old.name)p.cat=name});Object.assign(old,{name,slug:sl,desc,sort})}else C.push({id:Date.now(),name,slug:sl,desc,sort});LS.set("nc_cat",C);save();admin();shop()}}
+async function catDel(id){const c=C.find(x=>x.id==id);if(!c)return;const n=P.filter(p=>p.cat==c.name).length;
+if(n)return alert(n+" product"+(n==1?" uses":"s use")+' "'+c.name+'". Move them to another category first, then delete it.');
+if(!confirm('Delete the category "'+c.name+'"?'))return;
+if(sb){const {error}=await sb.from("categories").delete().eq("id",c.id);if(error)return alert(error.message);await loadAll(true);adminDB();shop()}
+else{C=C.filter(x=>x.id!=id);LS.set("nc_cat",C);admin();shop()}}
+document.addEventListener("click",e=>{const b=e.target.closest("[data-ce],[data-cx],#catx");if(!b)return;
+if(b.dataset.cx){catDel(b.dataset.cx);return}
+if(b.id=="catx"){admin();return}
+const f=$("#catf"),c=C.find(x=>x.id==b.dataset.ce);if(!f||!c)return;
+f.cid.value=c.id;f.cname.value=c.name;f.cdesc.value=c.desc||"";f.csort.value=c.sort;$("#catx").hidden=false;f.scrollIntoView();f.cname.focus()});

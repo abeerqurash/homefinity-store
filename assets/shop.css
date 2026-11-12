@@ -231,3 +231,20 @@ a.add{text-decoration:none}
 .opt-err{margin:10px 0 0;color:#b3261e;font:600 14px Manrope,sans-serif}
 .ct-var{font-weight:700}
 @media (prefers-reduced-motion:reduce){.opt{transition:none}}
+
+/* product page: description sections and category intro */
+.nc-long{max-width:860px;margin:64px 0 0}
+.nc-long[hidden]{display:none}
+.nc-long .prose{font:500 17px/1.75 Manrope,sans-serif;color:#33302a}
+.nc-long .prose+.prose{margin-top:44px;padding-top:34px;border-top:1px solid var(--line)}
+.prose h2{font:800 30px/1.15 Manrope,sans-serif;letter-spacing:-.02em;margin:1.3em 0 .55em;color:#101614}
+.prose h3{font:800 22px/1.2 Manrope,sans-serif;color:#101614}
+.prose p{margin:0 0 1.05em}
+.prose ul,.prose ol{margin:0 0 1.1em;padding-left:1.4em}
+.prose li{margin:0 0 .4em}
+.prose blockquote{margin:1.2em 0;padding:.5em 1.2em;border-left:4px solid #d52b2b;background:#faf6ea;border-radius:0 12px 12px 0}
+.prose a{color:#d52b2b;text-decoration:underline}
+.nc-catdesc{margin:14px 0 0;max-width:62ch;font:500 16px/1.6 Manrope,sans-serif;color:#4a463c}
+.nc-catdesc[hidden]{display:none}
+@media (max-width:720px){.nc-long{margin-top:44px}.prose h2{font-size:24px}}
+.prose h2,.prose h3,.prose h4{font-family:Manrope,system-ui,sans-serif!important;text-transform:none!important;letter-spacing:-.015em}

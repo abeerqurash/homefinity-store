@@ -14,11 +14,11 @@ function renderList(){
  if(!wired){wired=true;$q.value=q.get("q")||"";[$q,$c,$s,$i].forEach(e=>e.addEventListener("input",renderList))}
  if(!P.length){list.innerHTML=skel(8);document.getElementById("nc-n").textContent="Loading products…";return}
  const want=sel;
- const cats=[...new Set(P.map(p=>p.cat))].sort();
+ const cats=catList();
  $c.innerHTML='<option value="">All categories</option>'+cats.map(c=>`<option ${c==want?"selected":""}>${esc(c)}</option>`).join("");
  const ch=document.getElementById("nc-chips");
  if(ch){const n=c=>c?P.filter(p=>p.cat==c).length:P.length;ch.innerHTML=["",...cats].map(c=>`<button type="button" class="chip" data-c="${esc(c)}" aria-pressed="${c==want}">${c?esc(c):"All"}<small>${n(c)}</small></button>`).join("");
-  ch.onclick=e=>{const b=e.target.closest("[data-c]");if(!b)return;sel=b.dataset.c;renderList()}}
+  ch.onclick=e=>{const b=e.target.closest("[data-c]");if(!b)return;sel=b.dataset.c;renderList()};let cd=document.getElementById("nc-catdesc");if(!cd){cd=document.createElement("p");cd.id="nc-catdesc";cd.className="nc-catdesc";ch.after(cd)}const cc=C.find(c=>c.name==want);cd.textContent=cc&&cc.desc?cc.desc:"";cd.hidden=!cd.textContent}
  const t=$q.value.trim().toLowerCase();
  let r=P.filter(p=>(!want||p.cat==want)&&(!$i.checked||p.stock>0)&&(!t||[p.name,p.cat,p.d,p.ing,...(p.vars||[]).map(v=>v.label+" "+(v.sku||""))].join(" ").toLowerCase().includes(t)));
  const s=$s.value;
@@ -80,6 +80,8 @@ function renderDetail(){
  const gal=`<div class="gal"><div class="gal-main"><img id="nc-big" src="${im[cur]||""}" alt="${esc(p.name)}">${n>1?`<button type="button" class="gal-nav prev" aria-label="Previous photo">${I.prev}</button><button type="button" class="gal-nav next" aria-label="Next photo">${I.next}</button><span class="gal-count" id="gal-c">${cur+1} / ${n}</span>`:""}<button type="button" class="gal-zoom" aria-label="View larger photo">${I.zoom}</button></div>${n?`<div class="gal-th" role="list">${im.map((s,i)=>`<button type="button" role="listitem" data-i="${i}" aria-label="Show photo ${i+1} of ${n}" aria-current="${i==cur}"><img src="${s}" alt=""></button>`).join("")}</div>`:""}</div>`;
  const buy=p.stock>0?`${opts}<div class="buy"><div class="nc-qty"><button type="button" id="q-m" aria-label="Decrease quantity">−</button><span id="q-n" aria-live="polite">${kq}</span><button type="button" id="q-p" aria-label="Increase quantity">+</button></div><button type="button" class="add lg" id="q-add">${CART}<span>Add to cart</span></button></div>`:'<p class="soldout">This product is out of stock right now. Check back soon or <a href="contact.html">contact us</a>.</p>';
  det.innerHTML=`${gal}<div class="info"><span class="nc-crumb"><a href="index.html">Home</a> / <a href="products.html">Shop</a> / <a href="products.html?cat=${encodeURIComponent(p.cat)}">${esc(p.cat)}</a></span><h1>${esc(p.name)}</h1><div class="priceline"><span class="pr">${pfx}${rs(price)}</span>${st}</div>${p.d?`<p class="lead">${esc(p.d)}</p>`:""}${buy}<ul class="perks"><li>${I.cod}<span><b>Cash on delivery</b>Pay when your order arrives</span></li><li>${I.trk}<span><b>Track your order</b>Use the code from your confirmation</span></li><li>${I.lock}<span><b>Secure checkout</b>Prices and stock checked on our server</span></li></ul>${p.ing?`<details open><summary>Details</summary><p>${esc(p.ing)}</p></details>`:""}<details><summary>Delivery &amp; payment</summary><p>Cash on delivery. Delivery fee and free-delivery limit are shown at checkout.</p></details></div>${p.stock>0?`<div class="buybar"><div><small>Price</small><b>${pfx}${rs(price)}</b></div><button type="button" class="add lg" id="q-add2">${CART}<span>Add to cart</span></button></div>`:""}`;
+ let LG=document.getElementById("nc-long");if(!LG){LG=document.createElement("div");LG.id="nc-long";LG.className="nc-long";document.getElementById("nc-rel").before(LG)}
+ LG.innerHTML=(p.long?`<section class="prose">${cleanHTML(p.long)}</section>`:"")+(p.extra?`<section class="prose extra"><h2>Additional information</h2>${cleanHTML(p.extra)}</section>`:"");LG.hidden=!LG.innerHTML;
  const rel=P.filter(x=>x.cat==p.cat&&x.id!=p.id).slice(0,4);
  document.getElementById("nc-rel").innerHTML=rel.length?`<h2>More from ${esc(p.cat)}</h2><div class="nc-grid">${rel.map(card).join("")}</div>`:"";
  /* gallery behaviour */

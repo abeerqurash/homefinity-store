@@ -5,12 +5,12 @@ window.NC_CONFIG={url:"https://szecciiwsjopoxbumrcr.supabase.co",key:"sb_publish
 
 // Optional store details. Anything left empty is simply not shown.
 window.HF={
-  whatsapp:"",   // e.g. "923001234567" (country code, no + or spaces) -> shows a WhatsApp button
+  whatsapp:"923432764409",   // e.g. "923001234567" (country code, no + or spaces) -> shows a WhatsApp button
   whatsappText:"Hi homefinity.pk, I have a question about a product.",
-  phone:"",      // e.g. "+92 300 1234567"
-  email:"",      // e.g. "hello@homefinity.pk"
-  address:"",    // e.g. "Shop 12, Main Street, Karachi"
-  hours:"",      // e.g. "Mon–Sat, 10am–8pm"
+  phone:"+92 343-2764409",      // e.g. "+92 300 1234567"
+  email:"hello@homefinity.pk",      // e.g. "hello@homefinity.pk"
+  address:"Basement shop B88 gul tijarah saddar Karachi",    // e.g. "Shop 12, Main Street, Karachi"
+  hours:"24Hours",      // e.g. "Mon–Sat, 10am–8pm"
   freeDelivery:3000, // order total (Rs.) for free delivery; used by the cart bar and Policies page
   deliveryFee:200    // delivery fee (Rs.) shown on the Policies page
 };

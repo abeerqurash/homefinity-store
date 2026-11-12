@@ -1,7 +1,7 @@
 // homefinity.pk – the ONLY place to put your Supabase details.
 // Leave url empty to run in demo mode (data stays in this browser only).
 // Use the anon public key only. NEVER put the service_role key here.
-window.NC_CONFIG={url:"",key:""};
+window.NC_CONFIG={url:"https://szecciiwsjopoxbumrcr.supabase.co",key:"sb_publishable_dT1y_TQ_BRz70_qWHfXJrA_AE4x1Ur5"};
 
 // Optional store details. Anything left empty is simply not shown.
 window.HF={

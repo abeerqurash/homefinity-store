@@ -5,8 +5,11 @@ var body=document.getElementById("ct-body");if(!body)return;
 var live=document.getElementById("ct-live");
 var rs=function(n){return "Rs. "+Number(n).toLocaleString("en-PK")};
 var esc=function(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){return({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"})[c]})};
-var A=null,notices=[],focusKey=null;
+var A=null,notices=[],focusKey=null,cpErr="";
 function say(m){if(live)live.textContent=m}
+function cpBox(t){
+if(t.coupon)return '<div class="cp-on"><span><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L2 12V2h10l8.6 8.6a2 2 0 0 1 0 2.8zM7 7h.01"/></svg><b>'+esc(t.coupon)+'</b> applied</span><button type="button" class="cp-rm" data-cprm="1">Remove</button></div>'+(t.cpmsg?'<p class="cp-msg err">'+esc(t.cpmsg)+'</p>':'');
+return '<form class="cp-form pform" id="cp-form" novalidate><label for="cp-in" class="cp-l">Have a coupon?</label><div class="cp-row"><input id="cp-in" name="code" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Enter code" maxlength="20"><button class="cp-go" type="submit">Apply</button></div><p class="cp-msg'+(cpErr?' err':'')+'" id="cp-msg" role="status" aria-live="polite">'+esc(cpErr)+'</p></form>'}
 function render(){
 var L=A.cart.lines(),t=A.cart.totals();
 var warn=notices.length?'<p class="os-err" role="alert">'+notices.map(esc).join("<br>")+'</p>':"";
@@ -20,7 +23,7 @@ return '<li class="ct-line"><a class="ct-im" href="product.html?id='+p.id+'" tab
 '<div class="ct-q" role="group" aria-label="Quantity of '+nm+'"><button type="button" data-act="dec" data-id="'+key+'" aria-label="Decrease quantity of '+nm+'">\u2212</button><output>'+l.q+'</output><button type="button" data-act="inc" data-id="'+key+'" aria-label="Increase quantity of '+nm+'"'+(l.q>=max?" disabled":"")+'>+</button></div>'+
 '<b class="ct-total">'+rs(l.price*l.q)+'</b>'+
 '<button type="button" class="ct-rm" data-act="rm" data-id="'+key+'" aria-label="Remove '+nm+' from cart">Remove</button></li>'}).join("");
-body.innerHTML=warn+'<div class="pg-grid"><ul class="ct-list">'+lines+'</ul><aside class="pg-side"><section class="os-card" aria-labelledby="ct-sh"><h2 id="ct-sh">Order summary</h2><dl class="os-tot"><div><dt>Subtotal ('+n+(n==1?" item":" items")+')</dt><dd>'+rs(t.sub)+'</dd></div><div><dt>Delivery</dt><dd>'+(t.ship?rs(t.ship):"Free")+'</dd></div><div class="t"><dt>Total</dt><dd>'+rs(t.total)+'</dd></div></dl>'+
+body.innerHTML=warn+'<div class="pg-grid"><ul class="ct-list">'+lines+'</ul><aside class="pg-side"><section class="os-card" aria-labelledby="ct-sh"><h2 id="ct-sh">Order summary</h2>'+cpBox(t)+'<dl class="os-tot"><div><dt>Subtotal ('+n+(n==1?" item":" items")+')</dt><dd>'+rs(t.sub)+'</dd></div>'+(t.disc?'<div class="cp-d"><dt>Discount ('+esc(t.coupon)+')</dt><dd>− '+rs(t.disc)+'</dd></div>':'')+'<div><dt>Delivery</dt><dd>'+(t.ship?rs(t.ship):"Free")+'</dd></div><div class="t"><dt>Total</dt><dd>'+rs(t.total)+'</dd></div></dl>'+
 '<p class="ct-free'+(left?"":" ok")+'">'+(left?"Add <b>"+rs(left)+"</b> more for free delivery":"<b>Free delivery</b> applied to this order")+'<span class="ct-bar" aria-hidden="true"><i style="width:'+pct+'%"></i></span></p>'+
 '<div class="ct-act"><a class="btn ck-go" href="checkout.html"><span>Proceed to checkout</span></a><a class="ct-link" href="products.html">Continue shopping</a></div>'+
 '<p class="ct-note">Payment is cash on delivery. You can review everything at checkout before you place your order.</p></section></aside></div>';
@@ -35,6 +38,11 @@ A.cart.set(l.key,l.q+(act==="inc"?1:-1));
 var nl=A.cart.lines().filter(function(x){return x.key===id})[0];
 say("Quantity of "+l.p.name+" is now "+(nl?nl.q:0)+".");
 render()};
+body.addEventListener("submit",function(e){var f=e.target;if(!f||f.id!=="cp-form"||!A)return;e.preventDefault();
+var code=f.code.value.trim();if(!code){cpErr="Enter a coupon code.";render();var i0=document.getElementById("cp-in");if(i0)i0.focus();return}
+var btn=f.querySelector(".cp-go");btn.disabled=true;btn.textContent="Checking\u2026";
+A.cart.applyCoupon(code).then(function(){cpErr="";say("Coupon applied.");render()}).catch(function(er){cpErr=(er&&er.message)||"That coupon code is not valid.";render();var i=document.getElementById("cp-in");if(i){i.value=code;i.focus()}})});
+body.addEventListener("click",function(e){if(e.target.closest&&e.target.closest("[data-cprm]")&&A){A.cart.removeCoupon();cpErr="";say("Coupon removed.");render()}});
 function start(){A=window.NC_API;
 A.cart.ready().then(function(){notices=A.cart.fixStock();render();var h=document.getElementById("pg-h");if(h)h.focus()})}
 window.addEventListener("pageshow",function(e){if(e.persisted&&A)render()});

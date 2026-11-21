@@ -69,3 +69,11 @@ Run this once. Open **SQL Editor** > **New query**, paste everything from `supab
 - The same phone number can place at most 3 live orders per hour. Change this in the `place_order` function if it is too strict.
 - Customers are not emailed or messaged yet. The order page lets them copy the link, send it to themselves on WhatsApp or email, and remembers it in their browser.
 - Not built yet: online card payments, customer accounts, returns and refunds, automatic email or SMS notifications, coupons, delivery zones (delivery is one flat fee).
+
+### Coupons update
+Run this once. Open **SQL Editor** > **New query**, paste everything from `supabase_migration_coupons.sql` and click **Run**. It is safe to run more than once and keeps your products and orders. Do it before you upload the new site files, because the new cart sends the coupon code to this function.
+- New installs: `supabase_schema.sql` already includes it, so you do not need this file.
+- **Admin > Coupons**: create percentage, fixed-amount or free-delivery codes with an optional minimum order, start and end date and usage limit. You can disable, re-enable or delete a code at any time.
+- Customers enter the code in the cart. The discount is checked again on the server when the order is placed, so it cannot be changed in the browser.
+- Cancelling an order gives its coupon use back.
+- Test it: create a code in Admin > Coupons, add items to a cart, apply the code, place an order, and check that the admin order and the printed packing slip show the discount.

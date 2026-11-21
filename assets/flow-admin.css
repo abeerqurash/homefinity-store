@@ -177,3 +177,13 @@ body.adm-on{overflow-x:clip!important;overflow-y:visible!important}
 .savebar{position:sticky;bottom:0;z-index:5;display:flex;gap:10px;margin:6px -22px -22px;padding:14px 22px;background:rgba(255,255,255,.94);backdrop-filter:blur(8px);border-top:1px solid var(--line);border-radius:0 0 22px 22px}
 .savebar .btn{flex:1}.savebar .btn.o{flex:0 0 auto}
 @media (max-width:760px){.pf2 .fg3{grid-template-columns:1fr}.savebar{margin:6px -16px -16px;padding:12px 16px}}
+
+/* coupons */
+.cpn-grid{display:grid;grid-template-columns:minmax(300px,380px) minmax(0,1fr);gap:18px;align-items:start}
+.cpn-form h3{margin:0 0 4px}
+.cpn-form label{display:grid;gap:6px;font:700 13px Manrope,sans-serif}
+.cpn-form input,.cpn-form select{min-height:46px;width:100%}
+.cpn-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.tbl .btn{min-height:36px;padding:0 14px;font-size:13px}
+@media (max-width:1100px){.cpn-grid{grid-template-columns:1fr}}
+.cpn-form h3{font:800 18px Manrope,system-ui,sans-serif!important;letter-spacing:0}

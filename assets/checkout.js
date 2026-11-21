@@ -14,7 +14,7 @@ if(!L.length){grid.hidden=true;if(empty)empty.hidden=false;return}
 grid.hidden=false;if(empty)empty.hidden=true;
 var left=Math.max(0,t.free-t.sub);
 sum.innerHTML='<ul class="ck-items">'+L.map(function(l){return '<li><span class="ck-th"><img src="'+esc(l.img||"")+'" alt=""><b aria-hidden="true">'+l.q+'</b></span><span class="ck-nm">'+esc(l.p.name)+(l.vl?' <small>('+esc(l.vl)+')</small>':'')+'<span class="sr-only"> quantity '+l.q+'</span></span><b>'+rs(l.price*l.q)+'</b></li>'}).join("")+'</ul>'+
-'<dl class="os-tot"><div><dt>Subtotal</dt><dd>'+rs(t.sub)+'</dd></div><div><dt>Delivery</dt><dd>'+(t.ship?rs(t.ship):"Free")+'</dd></div><div class="t"><dt>Total, pay on delivery</dt><dd>'+rs(t.total)+'</dd></div></dl>'+
+'<dl class="os-tot"><div><dt>Subtotal</dt><dd>'+rs(t.sub)+'</dd></div>'+(t.disc?'<div class="cp-d"><dt>Discount ('+esc(t.coupon)+')</dt><dd>− '+rs(t.disc)+'</dd></div>':'')+'<div><dt>Delivery</dt><dd>'+(t.ship?rs(t.ship):"Free")+'</dd></div><div class="t"><dt>Total, pay on delivery</dt><dd>'+rs(t.total)+'</dd></div></dl>'+
 '<p class="ct-free'+(left?"":" ok")+'">'+(left?"Add <b>"+rs(left)+"</b> more for free delivery":"<b>Free delivery</b> applied")+'</p>'}
 function start(){A=window.NC_API;
 var f=document.getElementById("cf"),city=f&&f.elements.city,prov=f&&f.elements.province;

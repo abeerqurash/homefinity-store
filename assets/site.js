@@ -43,7 +43,7 @@ if(num){const a=document.createElement("a");a.className="hf-wa on";a.target="_bl
 if(window.NC_ADMIN)return;
 const w=document.querySelector(".w-commerce-commercecartcontainerwrapper");if(!w)return;
 document.body.appendChild(w);w.classList.add("hf-cart");
-const H=window.HF||{},FREE=Number(H.freeDelivery)||3000,num=s=>Number(String(s||"").replace(/\D/g,""))||0,rs=n=>"Rs. "+Number(n).toLocaleString("en-PK");
+const H=window.HF||{},FR=()=>Number((window.HF||H).freeDelivery)||3000,num=s=>Number(String(s||"").replace(/\D/g,""))||0,rs=n=>"Rs. "+Number(n).toLocaleString("en-PK");
 const $=s=>w.querySelector(s),isOpen=()=>w.style.display!=="none"&&w.style.display!=="";
 const hide=()=>{w.style.display="none"};
 const head=$(".w-commerce-commercecartheader"),close=$(".w-commerce-commercecartcloselink");
@@ -60,9 +60,9 @@ const put=(el,k,v)=>{if(el&&el[k]!==v)el[k]=v};
 function sync(){
  const n=num(document.querySelector(".w-commerce-commercecartopenlinkcount")?.textContent),c=$(".hf-cart-n");
  if(c){put(c,"textContent",n+(n==1?" item":" items"));c.style.display=n?"":"none"}
- if(ship){const sub=num($(".w-commerce-commercecartordervalue")?.textContent),left=Math.max(0,FREE-sub);
+ if(ship){const sub=num($(".w-commerce-commercecartordervalue")?.textContent),left=Math.max(0,FR()-sub);
   ship.classList.toggle("ok",left==0&&sub>0);
-  put(ship,"innerHTML",(left==0?"<b>Free delivery unlocked</b> on this order":"Add <b>"+rs(left)+"</b> more for free delivery")+'<span class="hf-cart-bar"><i style="width:'+Math.min(100,Math.round(sub/FREE*100))+'%"></i></span>')}
+  put(ship,"innerHTML",(left==0?"<b>Free delivery unlocked</b> on this order":"Add <b>"+rs(left)+"</b> more for free delivery")+'<span class="hf-cart-bar"><i style="width:'+Math.min(100,Math.round(sub/FR()*100))+'%"></i></span>')}
  w.querySelectorAll(".w-commerce-commercecartremovelink").forEach(a=>{if(!a.title){a.setAttribute("aria-label","Remove item");a.title="Remove"}})}
 new MutationObserver(sync).observe(w,{childList:true,subtree:true,characterData:true});
 const cnt=document.querySelector(".w-commerce-commercecartopenlinkcount");if(cnt)new MutationObserver(sync).observe(cnt,{childList:true,characterData:true,subtree:true});

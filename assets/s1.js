@@ -47,7 +47,8 @@ else if(c=="b")x("bold");else if(c=="i")x("italic");else if(c=="ul")x("insertUno
 else if(c=="x"){x("removeFormat");x("formatBlock","P");x("unlink")}
 else if(c=="a"){const u=(prompt("Link address, starting with https://")||"").trim();if(u){if(/^(https?:\/\/|mailto:|tel:)/i.test(u))x("createLink",u);else alert("The link must start with https://")}}});
 document.addEventListener("paste",e=>{const ed=e.target.closest&&e.target.closest(".rte-b");if(!ed)return;e.preventDefault();const cd=e.clipboardData,h=cd.getData("text/html"),t=cd.getData("text/plain");document.execCommand("insertHTML",false,h?cleanHTML(h):esc(t).replace(/\n/g,"<br>"))});
-let SHIP=200,FREE=3000;let CP=LS.get("nc_cp",[]),CPR=LS.get("nc_cpr",null);const STAT=["Placed","Confirmed","Packed","Dispatched","Delivered","Cancelled"];
+const _sh=LS.get("nc_ship",null),_H=window.HF||{};let SHIP=_sh?+_sh.fee:(_H.deliveryFee!=null&&_H.deliveryFee!==""?+_H.deliveryFee:200),FREE=_sh?+_sh.free:(+_H.freeDelivery>0?+_H.freeDelivery:3000);
+function pubShip(){const H=window.HF=window.HF||{};H.deliveryFee=SHIP;H.freeDelivery=FREE;try{window.dispatchEvent(new Event("nc:ship"))}catch(e){}}pubShip();let shFlash=false;let CP=LS.get("nc_cp",[]),CPR=LS.get("nc_cpr",null);const STAT=["Placed","Confirmed","Packed","Dispatched","Delivered","Cancelled"];
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)],rs=n=>"Rs. "+Number(n).toLocaleString("en-PK"),pr=id=>P.find(x=>x.id==id);
 /* ---- product options (colour / size): helpers. A cart line is {id,q} or {id,q,v}. ---- */
 const hasV=p=>!!(p&&Array.isArray(p.vars)&&p.vars.length),vr=(p,v)=>p&&v?(p.vars||[]).find(x=>x.id==v)||null:null,
@@ -145,6 +146,12 @@ const bars=d.rev.map((v,i)=>{const bh=Math.max(v?3:0,v/top*ih),x=L+i*bw+bw*.18,y
 const xs=d.days.map((t,i)=>i%2?"":`<text x="${L+i*bw+bw/2}" y="${H-8}" text-anchor="middle">${new Date(t).getDate()}</text>`).join("");
 return `<svg class="rc" viewBox="0 0 ${W} ${H}" role="img" aria-label="Revenue over the last 14 days">${grid}${bars}${xs}</svg>`}
 const STC={Placed:"#d9a21b",Confirmed:"#2f6fdd",Packed:"#7a4fd6",Dispatched:"#0f9b9b",Delivered:"#1d8a4a",Cancelled:"#d03a3a"};
+async function shSubmit(e){e.preventDefault();const f=e.target,fee=Math.floor(+f.fee.value),free=Math.floor(+f.free.value);
+if(!(fee>=0&&fee<=10000))return alert("Enter a delivery fee between 0 and 10,000.");
+if(!(free>=1))return alert("Enter the order amount for free delivery (1 or more).");
+if(sb){const {error}=await sb.from("settings").upsert([{key:"ship_fee",value:String(fee)},{key:"free_over",value:String(free)}]);if(error)return alert(error.message)}
+else LS.set("nc_ship",{fee,free});
+SHIP=fee;FREE=free;pubShip();shFlash=true;await cpRefresh()}
 const cpRefresh=async()=>{if(sb){await loadAll(true);adminDB()}else admin()};
 async function cpSubmit(e){e.preventDefault();const f=e.target,code=f.code.value.trim().toUpperCase(),type=f.type.value,val=Math.floor(+f.value.value)||0,min=Math.floor(+f.min.value)||0,lim=f.limit.value?Math.floor(+f.limit.value):null,
 st=f.start.value?new Date(f.start.value+"T00:00:00").toISOString():null,en=f.end.value?new Date(f.end.value+"T23:59:59").toISOString():null;
@@ -166,7 +173,7 @@ if(sb){const {error}=await sb.from("coupons").delete().eq("code",code);if(error)
 await cpRefresh()}
 function adminLocal(){const a=$("#admin"),on=!!window.NC_ADMIN;a.hidden=!on;document.querySelector(".page-wrapper").hidden=on;document.body.classList.toggle("adm-on",on);if(!on)return;
 const rev=O.filter(o=>o.status!="Cancelled").reduce((s,o)=>s+o.total,0);
-const openN=O.filter(o=>["Placed","Confirmed","Packed"].includes(o.status)).length;const tabs=[["dash","Dashboard"],["prod","Products"],["cat","Categories"],["ord","Orders"],["cpn","Coupons"]].map(([k,n])=>`<button data-t="${k}" aria-pressed="${tab==k}">${ico(k)}<span>${n}</span>${k=="ord"&&openN?`<em class="cnt">${openN}</em>`:""}</button>`).join("");let body="";
+const openN=O.filter(o=>["Placed","Confirmed","Packed"].includes(o.status)).length;const tabs=[["dash","Dashboard"],["prod","Products"],["cat","Categories"],["ord","Orders"],["cpn","Coupons"],["set","Settings"]].map(([k,n])=>`<button data-t="${k}" aria-pressed="${tab==k}">${ico(k)}<span>${n}</span>${k=="ord"&&openN?`<em class="cnt">${openN}</em>`:""}</button>`).join("");let body="";
 if(tab=="dash"){const d=dayData(14),all=O.filter(o=>o.status!="Cancelled"),openO=O.filter(o=>["Placed","Confirmed","Packed"].includes(o.status)),
 avg=all.length?Math.round(rev/all.length):0,agg={};O.filter(o=>o.status!="Cancelled").forEach(o=>(o.items||[]).forEach(i=>{const a=agg[i.name]||(agg[i.name]={n:i.name,u:0,r:0});a.u+=+i.q||0;a.r+=(+i.price||0)*(+i.q||0)}));
 const top=Object.values(agg).sort((a,b)=>b.u-a.u).slice(0,5),tm=Math.max(...top.map(x=>x.u),1);
@@ -179,6 +186,7 @@ body=`<div class="kpis">${kpi("Revenue","money",rs(rev),dlt(delta(d.rev)),spark(
 <div class="adm-row r111"><section class="card"><header><h3>Top products</h3><span class="note">By units sold</span></header>${top.length?`<ol class="tops">${top.map((x,i)=>`<li><span class="rk">${i+1}</span><div><b>${esc(x.n)}</b><div class="tb"><i style="width:${x.u/tm*100}%"></i></div></div><span class="tv">${x.u} sold<small>${rs(x.r)}</small></span></li>`).join("")}</ol>`:'<div class="empty">No sales yet.</div>'}</section>
 <section class="card"><header><h3>Low or out of stock</h3><span class="note">${low.length} item${low.length==1?"":"s"}</span></header>${low.length?`<ul class="lows">${low.map(x=>`<li><span>${esc(x.n)}</span><b class="${x.s<=0?"out":"low"}">${x.s<=0?"Out":x.s+" left"}</b></li>`).join("")}</ul>`:'<div class="empty">All products well stocked.</div>'}</section>
 <section class="card wide"><header><h3>Recent orders</h3><button class="lnk" data-t="ord">View all →</button></header>${O.length?`<div class="tw"><table class="tbl"><thead><tr><th>Order</th><th>Customer</th><th>Date</th><th class="n">Total</th><th>Status</th></tr></thead><tbody>${O.slice(0,6).map(o=>`<tr><td><b>${esc(o.id)}</b></td><td>${esc((o.cust||{}).name||"")}<small>${esc((o.cust||{}).city||"")}</small></td><td>${esc(oDate(o))}</td><td class="n">${rs(o.total)}</td><td><span class="bd bd-${String(o.status).toLowerCase()}">${esc(o.status)}</span></td></tr>`).join("")}</tbody></table></div>`:'<div class="empty">No orders yet.</div>'}</section></div>`}
+if(tab=="set"){body=`<form id="shf" class="pform shf card"><h3>Delivery</h3><p class="note">These amounts are shown to customers in the cart, at checkout and on the Policies page, and are used when an order is placed.</p>${shFlash?'<p class="sh-ok" role="status">Saved. Customers see the new amounts straight away.</p>':""}<div class="cpn-2"><label>Delivery fee (Rs.)<input name="fee" type="number" min="0" max="10000" step="1" required value="${SHIP}"></label><label>Free delivery from (Rs.)<input name="free" type="number" min="1" step="1" required value="${FREE}"></label></div><p class="note sh-prev">Right now customers pay <b>${rs(SHIP)}</b> delivery, and delivery is free once their products total reaches <b>${rs(FREE)}</b> (before any coupon).</p><button class="btn">Save settings</button></form>`;shFlash=false}
 if(tab=="cpn"){const now=Date.now(),sx=c=>!c.active?["Disabled","bd-cancelled"]:(c.end&&now>+new Date(c.end))?["Expired","bd-cancelled"]:(c.start&&now<+new Date(c.start))?["Scheduled","bd-confirmed"]:(c.limit&&(c.used||0)>=c.limit)?["Used up","bd-packed"]:["Active","bd-delivered"],
 dt=v=>v?new Date(v).toLocaleDateString("en-PK",{day:"numeric",month:"short",year:"numeric"}):"–",
 off=c=>c.type=="percent"?c.value+"% off":c.type=="fixed"?rs(c.value)+" off":"Free delivery";
@@ -208,6 +216,7 @@ body=`<div class="otools"><div class="chips">${["",...STAT].map(k=>`<button clas
 const TT={dash:"Dashboard",prod:"Products",cat:"Categories",ord:"Orders",cpn:"Coupons",set:"Settings"},SS={dash:new Date().toLocaleDateString("en-PK",{weekday:"long",day:"numeric",month:"long",year:"numeric"}),prod:P.length+" product"+(P.length==1?"":"s")+" in your catalogue",ord:O.length+" order"+(O.length==1?"":"s")+" in total",cpn:CP.length+" coupon"+(CP.length==1?"":"s"),set:"Store settings",cat:C.length+" categor"+(C.length==1?"y":"ies")+" for your products"};
 a.innerHTML=`<div class="adm"><aside class="adm-side"><div class="adm-brand">homefinity<span>.pk</span><small>Admin</small></div><nav class="tabs" aria-label="Admin">${tabs}</nav><a class="adm-back" href="index.html">← Back to store</a></aside><section class="adm-main"><header class="adm-top"><div><h2>${TT[tab]}</h2><p class="note">${SS[tab]}</p></div>${sb?"":'<span class="adm-demo">Demo mode · data stays in this browser</span>'}</header>${body}</section></div>`;
 const cpf=$("#cpf");if(cpf)cpf.onsubmit=cpSubmit;
+const shf=$("#shf");if(shf)shf.onsubmit=shSubmit;
 bindCat();const sf=$("#sf");if(sf)sf.onsubmit=e=>{e.preventDefault();LS.set("nc_video",sf.v.value.trim());alert("Saved")};const f=$("#pf");if(f)f.onsubmit=async e=>{e.preventDefault();const id=+f.id.value||Date.now(),old=pr(id),n=await imgs(f.files.files);
 const im=n.length?n:(old?.imgs||[]);let vars;try{vars=parseVars(f.vs.value,im,old?.vars)}catch(er){return alert(er.message)}
 const p={id,name:f.name.value,cat:f.cat.value,price:+f.price.value,stock:vars.length?vars.reduce((a,v)=>a+v.stock,0):(+f.stock.value||0),d:f.d.value,long:rget(f,"ld"),extra:rget(f,"ex"),ing:old?.ing||"",imgs:im,vars};
@@ -293,7 +302,7 @@ ready:()=>new Promise(res=>{let n=0;(function w(){if(P.length||++n>100)res();els
 async function loadAll(full){const {data:pd}=await sb.from("products").select("*").order("id");
 P=(pd||[]).map(r=>({id:r.id,name:r.name,cat:r.category,price:+r.price,stock:r.stock,imgs:r.images||[],ing:r.details||"",d:r.description||"",vars:Array.isArray(r.variants)?r.variants:[],long:r.long_description||"",extra:r.extra_info||""}));
 const {data:cd,error:ce}=await sb.from("categories").select("*").order("sort").order("name");catOK=!ce;C=ce?deriveC():(cd||[]).map(r=>({id:r.id,name:r.name,slug:r.slug,desc:r.description||"",sort:r.sort||0}));
-const {data:st}=await sb.from("settings").select("key,value");(st||[]).forEach(r=>{if(r.key=="ship_fee")SHIP=+r.value;if(r.key=="free_over")FREE=+r.value;if(r.key=="video_url")LS.set("nc_video",r.value)});
+const {data:st}=await sb.from("settings").select("key,value");(st||[]).forEach(r=>{if(r.key=="ship_fee")SHIP=+r.value;if(r.key=="free_over")FREE=+r.value;if(r.key=="video_url")LS.set("nc_video",r.value)});pubShip();
 if(full){const {data:od}=await sb.from("orders").select("*, order_events(status,created_at)").order("created_at",{ascending:false});
 O=(od||[]).map(r=>({id:r.order_no,cust:r.customer,items:r.items,total:+r.total,disc:+r.discount||0,coupon:r.coupon||"",pay:r.payment_method,status:r.status,events:(r.order_events||[]).map(e=>({s:e.status,t:e.created_at}))}));
 const {data:cd}=await sb.from("coupons").select("*").order("created_at",{ascending:false});CP=(cd||[]).map(r=>({code:r.code,type:r.type,value:+r.value,min:+r.min_order||0,start:r.starts_at,end:r.ends_at,limit:r.usage_limit,used:r.used_count||0,active:r.active}))}}

@@ -3,8 +3,7 @@
 const R=document.getElementById("pol-root");if(!R)return;
 document.documentElement.classList.add("js-ab");
 const H=window.HF||{},rs=n=>"Rs. "+Number(n).toLocaleString("en-PK");
-R.querySelectorAll('[data-hf="free"]').forEach(e=>e.textContent=rs(H.freeDelivery||3000));
-R.querySelectorAll('[data-hf="fee"]').forEach(e=>e.textContent=rs(H.deliveryFee||200));
+const fill=()=>{const G=window.HF||H;R.querySelectorAll('[data-hf="free"]').forEach(e=>e.textContent=rs(G.freeDelivery||3000));R.querySelectorAll('[data-hf="fee"]').forEach(e=>e.textContent=rs(G.deliveryFee!=null&&G.deliveryFee!==""?G.deliveryFee:200))};fill();addEventListener("nc:ship",fill);
 const hh=()=>{const h=document.querySelector(".main-header");if(h)R.style.setProperty("--hf-hdr",h.offsetHeight+"px")};hh();addEventListener("resize",hh);
 const tabs=[...R.querySelectorAll(".pol-tab")],panes=[...R.querySelectorAll(".pol-pane")];
 function show(k,push){if(!panes.some(p=>p.dataset.k==k))k=panes[0].dataset.k;tabs.forEach(t=>{const on=t.dataset.k==k;t.classList.toggle("on",on);t.setAttribute("aria-selected",on)});panes.forEach(p=>p.classList.toggle("on",p.dataset.k==k));if(push&&history.replaceState)history.replaceState(null,"","#"+k)}

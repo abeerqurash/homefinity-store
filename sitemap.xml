@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Starter sitemap with your main pages. In Admin > Settings, use "Download sitemap.xml" to make a full one that also lists every product, then replace this file. -->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://homefinity.pk/</loc></url>
+  <url><loc>https://homefinity.pk/products.html</loc></url>
+  <url><loc>https://homefinity.pk/about.html</loc></url>
+  <url><loc>https://homefinity.pk/journal.html</loc></url>
+  <url><loc>https://homefinity.pk/contact.html</loc></url>
+  <url><loc>https://homefinity.pk/policies.html</loc></url>
+</urlset>

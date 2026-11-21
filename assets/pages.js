@@ -67,11 +67,14 @@ function lightbox(p){
   document.addEventListener("keydown",e=>{if(o.hidden)return;if(e.key=="Escape")x();else if(e.key=="ArrowLeft")G.show(cur-1);else if(e.key=="ArrowRight")G.show(cur+1)})}
  o.hidden=false;document.body.style.overflow="hidden";o.querySelector(".lb-x").focus();o.classList.toggle("one",p.imgs.length<2);G.show(cur)}
 
+function seoEmit(p,im){try{const h=hasV(p),pr0=h?p.vars.map(x=>uPrice(p,x.id)):[p.price];
+window.dispatchEvent(new CustomEvent("nc:product",{detail:{id:p.id,name:p.name,desc:String(p.d||"").replace(/<[^>]*>/g,""),imgs:im,lo:Math.min(...pr0),hi:Math.max(...pr0),n:h?p.vars.length:1,inStock:h?p.vars.some(x=>+x.stock>0):p.stock>0}}))}catch(e){}}
 function renderDetail(){
  const p=pr(q.get("id"));
  if(!p){det.innerHTML=P.length?'<div class="nc-empty"><strong>This product could not be found</strong><a href="products.html">Back to all products</a></div>':'<div class="nc-empty"><strong>Loading…</strong></div>';return}
  document.title=p.name+" – homefinity.pk";
  const im=p.imgs.filter(Boolean);(p.vars||[]).forEach(x=>{if(x.img&&!im.includes(x.img))im.push(x.img)});const n=im.length;if(cur>=n)cur=0;
+ seoEmit(p,im);
  const V=hasV(p);if(V){if(selV&&!vr(p,selV))selV=null;if(!selV&&p.vars.length==1&&+p.vars[0].stock>0)selV=p.vars[0].id}
  const sv=V?vr(p,selV):null,avail=V?(sv?uStock(p,selV):p.stock):p.stock,price=V?(sv?uPrice(p,selV):fromP(p)):p.price,pfx=V&&!sv&&varies(p)?"From ":"";
  if(kq>avail)kq=Math.max(1,avail);

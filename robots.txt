@@ -1,0 +1,11 @@
+# homefinity.pk - tells search engines which pages to skip.
+User-agent: *
+Allow: /
+Disallow: /admin.html
+Disallow: /cart.html
+Disallow: /checkout.html
+Disallow: /order.html
+Disallow: /track.html
+
+# If your real address is not https://homefinity.pk, change the next line.
+Sitemap: https://homefinity.pk/sitemap.xml

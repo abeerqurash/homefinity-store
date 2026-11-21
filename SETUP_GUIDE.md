@@ -77,3 +77,10 @@ Run this once. Open **SQL Editor** > **New query**, paste everything from `supab
 - Customers enter the code in the cart. The discount is checked again on the server when the order is placed, so it cannot be changed in the browser.
 - Cancelling an order gives its coupon use back.
 - Test it: create a code in Admin > Coupons, add items to a cart, apply the code, place an order, and check that the admin order and the printed packing slip show the discount.
+
+### Search engines (SEO)
+1. **Set your real address once.** Open `assets/config.js` and add one line inside `window.HF={ ... }`: `siteUrl:"https://homefinity.pk",` (use your real address, no slash at the end). Optionally add `ogImage:"https://homefinity.pk/assets/share.jpg",` with a picture (about 1200x630) to show when your links are shared. If you skip `siteUrl`, the site uses the address it is opened from.
+2. **Upload `robots.txt` and `sitemap.xml`** to your website's main folder. If your address is not `https://homefinity.pk`, edit the `Sitemap:` line in `robots.txt`.
+3. **Make a full sitemap:** Admin > Settings > Search engines > **Download sitemap.xml**. It lists every page and every product. Upload it in place of `sitemap.xml`, and do this again after you add or remove products.
+4. **Tell Google:** In Google Search Console add your site, then Sitemaps > add `sitemap.xml`.
+5. Every page now has a canonical link and social-sharing tags. Product pages also carry Product and breadcrumb data, with price, stock status and photos taken from your catalogue. Cart, checkout, order and tracking pages are marked "do not index".
